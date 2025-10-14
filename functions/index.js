@@ -8,8 +8,6 @@
  */
 
 const {setGlobalOptions} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/https");
-const logger = require("firebase-functions/logger");
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
@@ -21,7 +19,7 @@ const logger = require("firebase-functions/logger");
 // functions should each use functions.runWith({ maxInstances: 10 }) instead.
 // In the v1 API, each function can only serve one request per container, so
 // this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+setGlobalOptions({maxInstances: 10});
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
@@ -52,7 +50,7 @@ exports.onUserCreate = functions.auth.user().onCreate((user) => {
   // Set the initial user profile data
   return userDocRef.set({
     email: user.email,
-    name: user.displayName || user.email.split('@')[0], // Use display name if available
+    name: user.displayName || user.email.split("@")[0],
     photoURL: user.photoURL || null,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
@@ -68,13 +66,13 @@ exports.contactSeller = functions.https.onCall(async (data, context) => {
   // 1. Check if the user calling this function is authenticated
   if (!context.auth) {
     throw new functions.https.HttpsError(
-      "unauthenticated",
-      "You must be logged in to contact a seller."
+        "unauthenticated",
+        "You must be logged in to contact a seller.",
     );
   }
 
   // 2. Get the data sent from the React app
-  const { listingId, message } = data;
+  const {listingId, message} = data;
   const buyerUid = context.auth.uid;
 
   // 3. (In a real app) Here you would:
@@ -84,9 +82,10 @@ exports.contactSeller = functions.https.onCall(async (data, context) => {
 
   // For now, we'll just log that it worked.
   console.log(
-    `User ${buyerUid} is interested in listing ${listingId} with message: "${message}"`
+      "User " + buyerUid + " is interested in listing " + listingId +
+      " with message: \"" + message + "\"",
   );
 
   // 4. Return a success message to the React app
-  return { status: "success", message: "Your interest has been noted!" };
+  return {status: "success", message: "Your interest has been noted!"};
 });

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -55,20 +55,9 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = async (email, password) => {
     try {
-      // Simulate API call - replace with actual authentication
-      if (email && password) {
-        const userData = {
-          id: Date.now(),
-          email,
-          name: email.split('@')[0],
-          signInTime: new Date().toISOString()
-        };
-        
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        return { success: true };
-      }
-      return { success: false, error: 'Invalid credentials' };
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+      // onAuthStateChanged will update user state and admin flag
+      return { success: true, credential };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -76,20 +65,9 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password, name) => {
     try {
-      // Simulate API call - replace with actual registration
-      if (email && password && name) {
-        const userData = {
-          id: Date.now(),
-          email,
-          name,
-          signUpTime: new Date().toISOString()
-        };
-        
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        return { success: true };
-      }
-      return { success: false, error: 'All fields are required' };
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // Optionally update displayName via admin or client updateProfile
+      return { success: true, userCredential };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -97,9 +75,10 @@ export const AuthProvider = ({ children }) => {
 
   const signInWithGoogle = async (googleUserData) => {
     try {
-      setUser(googleUserData);
-      localStorage.setItem('user', JSON.stringify(googleUserData));
-      return { success: true };
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      // onAuthStateChanged will handle updating user state
+      return { success: true, result };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -107,7 +86,7 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     try {
-      await auth.signOut();
+      await firebaseSignOut(auth);
       setUser(null);
       localStorage.removeItem('user');
     } catch (error) {

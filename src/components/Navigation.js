@@ -67,7 +67,7 @@ const Navigation = () => {
                     className={`nav-link ${location.pathname === '/admin' ? 'active' : ''}`}
                     onClick={closeMenu}
                   >
-                    <FontAwesomeIcon icon={ICONS.GEAR} />
+                    <FontAwesomeIcon icon={ICONS.SETTINGS} />
                     Admin
                   </Link>
                 )}
