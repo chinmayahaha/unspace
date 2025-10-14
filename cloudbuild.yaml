@@ -1,0 +1,13 @@
+steps:
+  - name: 'gcr.io/cloud-builders/nodejs'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Using Node: $(node --version)"
+        npm install
+        npm run build
+artifacts:
+  objects:
+    location: 'gs://$PROJECT_ID-build-artifacts/'
+    paths: ['build/**']
