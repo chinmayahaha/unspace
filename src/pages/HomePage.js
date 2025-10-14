@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import './HomePage.css';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext';
 import { functions } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
 
@@ -134,6 +134,11 @@ const HomePage = () => {
           <h1>
             <FontAwesomeIcon icon={ICONS.ROBOT} className="unauth-header-icon" /> UnSpace
           </h1>
+          {/* Featured slide preview (uses currentSlide) */}
+          <div className="featured-slide" style={{ marginTop: 12 }}>
+            <h3>{slides[currentSlide].title}</h3>
+            <p>{slides[currentSlide].description}</p>
+          </div>
           <p>Leverage the power of AI backend development process.</p>
           <Link to="/signup" className="unauth-cta-button">
             Let's get started ☕
