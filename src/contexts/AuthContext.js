@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth, db } from '../firebase';
+import { auth, db, firebaseConfigured } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
@@ -19,6 +19,15 @@ export const AuthProvider = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    // If Firebase isn't configured, skip listeners and mark loading false so the app can render a friendly UI
+    if (!firebaseConfigured || !auth) {
+      console.warn('Firebase not configured - skipping auth listener');
+      setUser(null);
+      setIsAdmin(false);
+      setLoading(false);
+      return () => {};
+    }
+
     // Listen for Firebase auth state changes
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
@@ -54,6 +63,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const signIn = async (email, password) => {
+    if (!firebaseConfigured || !auth) return { success: false, error: 'Firebase not configured' };
     try {
       const credential = await signInWithEmailAndPassword(auth, email, password);
       // onAuthStateChanged will update user state and admin flag
@@ -64,6 +74,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signUp = async (email, password, name) => {
+    if (!firebaseConfigured || !auth) return { success: false, error: 'Firebase not configured' };
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       // Optionally update displayName via admin or client updateProfile
@@ -74,6 +85,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signInWithGoogle = async (googleUserData) => {
+    if (!firebaseConfigured || !auth) return { success: false, error: 'Firebase not configured' };
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
@@ -85,6 +97,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
+    if (!firebaseConfigured || !auth) {
+      setUser(null);
+      localStorage.removeItem('user');
+      return;
+    }
     try {
       await firebaseSignOut(auth);
       setUser(null);

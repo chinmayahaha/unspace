@@ -16,32 +16,45 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_APP_ID,
   measurementId: process.env.REACT_APP_MEASUREMENT_ID
 };
+// Allow injecting a runtime config (useful for hosting environments)
+const runtimeConfig = (typeof window !== 'undefined' && window.__FIREBASE_CONFIG__) ? window.__FIREBASE_CONFIG__ : {};
+const mergedConfig = Object.assign({}, firebaseConfig, runtimeConfig);
 
-// Add this line right before initializing
-console.log("API Key being used:", process.env.REACT_APP_API_KEY);
+// Simple validation so the app fails gracefully when env vars are missing
+const isValidConfig = mergedConfig && mergedConfig.apiKey && mergedConfig.projectId && mergedConfig.authDomain;
 
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-// 2. Initialize the services you'll use
-const auth = getAuth(app);
-const db = getFirestore(app);
-const functions = getFunctions(app);
-
-// 3. This is the MOST IMPORTANT part for local development.
-// It checks if you are running the app locally and connects to the emulators.
-if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-  console.log("✅ Testing locally. Connecting to emulators...");
-  
-  // Point to the Auth emulator
-  connectAuthEmulator(auth, "http://localhost:9099");
-  
-  // Point to the Firestore emulator
-  connectFirestoreEmulator(db, "localhost", 8080);
-  // Point to the Functions emulator (default port 5001)
-  connectFunctionsEmulator(functions, "localhost", 5001);
+if (!isValidConfig) {
+  // Don't throw — export nulls so the rest of the app can render and show a friendly message
+  console.error('Firebase configuration is missing or incomplete. Please set REACT_APP_API_KEY, REACT_APP_PROJECT_ID and REACT_APP_AUTH_DOMAIN (or provide window.__FIREBASE_CONFIG__).');
 }
 
-// 4. Export the services so you can use them in your components
-export { auth, db, functions };
+// Initialize exports as nulls; components should check these before use
+let auth = null;
+let db = null;
+let functions = null;
+
+if (isValidConfig) {
+  // Add a small log so developers can verify which API key is in use (safe for public keys)
+  console.log('Initializing Firebase with projectId:', mergedConfig.projectId);
+
+  const app = initializeApp(mergedConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  functions = getFunctions(app);
+
+  // Connect emulators when running locally
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    console.log('✅ Testing locally. Connecting to emulators...');
+    try {
+      connectAuthEmulator(auth, 'http://localhost:9099');
+      connectFirestoreEmulator(db, 'localhost', 8080);
+      connectFunctionsEmulator(functions, 'localhost', 5001);
+    } catch (e) {
+      console.warn('Failed to connect to emulators (they may not be running):', e.message || e);
+    }
+  }
+}
+
+const firebaseConfigured = !!isValidConfig;
+
+export { auth, db, functions, firebaseConfigured };

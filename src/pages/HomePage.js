@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import './HomePage.css';
 import { Link } from 'react-router-dom';
 // import { useAuth } from '../contexts/AuthContext';
-import { functions } from '../firebase';
+import { functions, firebaseConfigured } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
 
 // Import Font Awesome components
@@ -149,20 +149,26 @@ const HomePage = () => {
           </div>
           {/* Function test button (local emulator friendly) */}
           <div style={{ marginTop: 12 }}>
-            <button
-              onClick={async () => {
-                try {
-                  const fn = httpsCallable(functions, 'contactSeller');
-                  const res = await fn({ listingId: 'example-listing-123', message: 'Testing from HomePage' });
-                  alert(JSON.stringify(res.data));
-                } catch (err) {
-                  console.error('Function test failed', err);
-                  alert('Function test failed: ' + (err?.message || err?.code || err));
-                }
-              }}
-            >
-              Test contactSeller (emulator)
-            </button>
+            {firebaseConfigured ? (
+              <button
+                onClick={async () => {
+                  try {
+                    const fn = httpsCallable(functions, 'contactSeller');
+                    const res = await fn({ listingId: 'example-listing-123', message: 'Testing from HomePage' });
+                    alert(JSON.stringify(res.data));
+                  } catch (err) {
+                    console.error('Function test failed', err);
+                    alert('Function test failed: ' + (err?.message || err?.code || err));
+                  }
+                }}
+              >
+                Test contactSeller (emulator)
+              </button>
+            ) : (
+              <div style={{ color: '#b33' }}>
+                Firebase is not configured. To test cloud functions locally, set your environment variables (REACT_APP_API_KEY, REACT_APP_AUTH_DOMAIN, REACT_APP_PROJECT_ID) or provide window.__FIREBASE_CONFIG__.
+              </div>
+            )}
           </div>
         </div>
       </header>
