@@ -1,0 +1,4 @@
+# requirements.txt
+
+firebase-functions
+firebase-admin
