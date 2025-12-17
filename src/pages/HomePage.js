@@ -1,292 +1,221 @@
-// src/components/HomePage.js
-import React, { useEffect, useState } from 'react';
+// src/pages/HomePage.js
+import React, { useState } from 'react';
 import './HomePage.css';
 import { Link } from 'react-router-dom';
-// import { useAuth } from '../contexts/AuthContext';
-import { functions, firebaseConfigured } from '../firebase';
-import { httpsCallable } from 'firebase/functions';
-
-// Import Font Awesome components
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ICONS } from '../config/icons';
 
+const FAQ_ITEMS = [
+  {
+    question: 'What kind of brands do you work with?',
+    answer:
+      'We partner with early-stage and established brands in tech, culture, and hospitality who see their website as a flagship experience, not a brochure.',
+  },
+  {
+    question: 'What is your typical project timeline?',
+    answer:
+      'Most projects run between 6–10 weeks from discovery to launch, depending on scope, content readiness, and integrations.',
+  },
+  {
+    question: 'Do you handle development as well as design?',
+    answer:
+      'Yes. Our team designs and builds responsive, production-ready websites in modern stacks, working closely with your team on handoff or ongoing support.',
+  },
+  {
+    question: 'How do we start a project together?',
+    answer:
+      'Share a short project brief via our contact form. We’ll follow up within 24 hours with a fit assessment and options for a kickoff call.',
+  },
+];
+
 const HomePage = () => {
-  // State for carousel
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [activeNav, setActiveNav] = useState('home');
+  const [openIndex, setOpenIndex] = useState(0);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const gclid = params.get('gclid') || '';
-    console.log('GCLID:', gclid); // Log the GCLID value
-    localStorage.setItem('gclid', gclid);
-  }, []);
-  
-
-
-  const slides = [
-    {
-      icon: ['fab', 'react'],
-      title: 'React',
-      description: 'Build interactive UIs with ease using React’s component-based architecture.',
-    },
-    {
-      icon: ['fab', 'google'],
-      title: 'Google Cloud',
-      description: 'Leverage scalable cloud infrastructure and services to deploy your applications.',
-    },
-    {
-      icon: 'database', // Placeholder for Firebase
-      title: 'Firebase',
-      description: 'Utilize real-time databases and authentication services to manage your backend effortlessly.',
-    },
-    {
-      icon: ['fab', 'github'],
-      title: 'GitHub',
-      description: 'Collaborate and manage your codebase efficiently with GitHub’s version control system.',
-    },
-    {
-      icon: ['fab', 'python'],
-      title: 'Python',
-      description: 'Implement robust backend logic and data processing with Python’s versatile capabilities.',
-    },
-  ];
-
-  const messages = [
-    "Explore more ways to build—whether it's in the mountains, by the beach, or right in your apartment.",
-    'Discover new horizons with AI-powered backend development.',
-    'Unleash your creativity wherever you are.',
-  ];
-
-  const episodes = [
-    {
-      title: 'Introduction to Backend Development',
-      description: 'Kickstart your journey by understanding the fundamentals of backend development.',
-      videoId: 'dQw4w9WgXcQ', // Replace with actual YouTube video ID
-    },
-  ];
-
-  useEffect(() => {
-    const slideInterval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000); // Change slide every 5 seconds
-
-    return () => {
-      clearInterval(slideInterval);
-    };
-  }, [slides.length]);
-
-  const scrollToSection = (id) => {
-    const section = document.getElementById(id);
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth' });
-      setActiveNav(id);
-    }
-  };
-
-  const handleNavClick = (id) => {
-    scrollToSection(id);
+  const toggleFAQ = (index) => {
+    setOpenIndex((prev) => (prev === index ? -1 : index));
   };
 
   return (
-    <div className="unauth-homepage">
-      {/* Section Navigation */}
-      <nav className="unauth-section-nav">
-        <div className="unauth-section-nav-content">
-          <ul className="unauth-section-nav-links">
-            <li
-              className={activeNav === 'BuyXSell' ? 'active' : ''}
-              onClick={() => handleNavClick('BuyXSell')}
-            >
-              BuyXSell
+    <main className="lux-home" aria-label="Studio Unspace homepage">
+      {/* Editorial Navbar */}
+      <header className="lux-nav-shell">
+        <nav className="lux-nav" aria-label="Primary">
+          <div className="lux-nav-brand">
+            Studio <span>Unspace</span>
+          </div>
+          <ul className="lux-nav-links">
+            <li>
+              <a href="#work">Work</a>
             </li>
-            <li
-              className={activeNav === 'Events' ? 'active' : ''}
-              onClick={() => handleNavClick('Events')}
-            >
-              Events
+            <li>
+              <a href="#studio">Studio</a>
             </li>
-            <li
-              className={activeNav === 'BookX' ? 'active' : ''}
-              onClick={() => handleNavClick('BookX')}
-            >
-              BookX
-            </li>
-            <li
-              className={activeNav === 'Community' ? 'active' : ''}
-              onClick={() => handleNavClick('Community')}
-            >
-              Community
-            </li>
-            <li
-              className={activeNav === 'cta' ? 'active' : ''}
-              onClick={() => handleNavClick('cta')}
-            >
-              Get Started
+            <li>
+              <a href="#contact">Contact</a>
             </li>
           </ul>
-        </div>
-      </nav>
+        </nav>
+      </header>
 
       {/* Hero Section */}
-      <header className="unauth-hero-section" id="home">
-        <div className="unauth-hero-content">
-          <h1>
-            <FontAwesomeIcon icon={ICONS.ROBOT} className="unauth-header-icon" /> UnSpace
-          </h1>
-          {/* Featured slide preview (uses currentSlide) */}
-          <div className="featured-slide" style={{ marginTop: 12 }}>
-            <h3>{slides[currentSlide].title}</h3>
-            <p>{slides[currentSlide].description}</p>
-          </div>
-          <p>Leverage the power of AI backend development process.</p>
-          <Link to="/signup" className="unauth-cta-button">
-            Let's get started ☕
-          </Link>
-          {/* Quick links to sample listings */}
-          <div style={{ marginTop: 12 }}>
-            <Link to="/listing/example-listing-123" className="unauth-link">View sample listing</Link>
-          </div>
-          {/* Function test button (local emulator friendly) */}
-          <div style={{ marginTop: 12 }}>
-            {firebaseConfigured ? (
-              <button
-                onClick={async () => {
-                  try {
-                    const fn = httpsCallable(functions, 'contactSeller');
-                    const res = await fn({ listingId: 'example-listing-123', message: 'Testing from HomePage' });
-                    alert(JSON.stringify(res.data));
-                  } catch (err) {
-                    console.error('Function test failed', err);
-                    alert('Function test failed: ' + (err?.message || err?.code || err));
-                  }
-                }}
-              >
-                Test contactSeller (emulator)
-              </button>
-            ) : (
-              <div style={{ color: '#b33' }}>
-                Firebase is not configured. To test cloud functions locally, set your environment variables (REACT_APP_API_KEY, REACT_APP_AUTH_DOMAIN, REACT_APP_PROJECT_ID) or provide window.__FIREBASE_CONFIG__.
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-      {/* Scrolling Text Banner */}
-      <section className="unauth-scrolling-banner">
-        <div className="scrolling-text">
-          {messages.map((message, index) => (
-            <span key={index}>{message}</span>
-          ))}
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="unauth-features" id="features">
-        <h2>Features</h2>
-        <div className="unauth-features-grid">
-          <div className="unauth-feature-item">
-            <FontAwesomeIcon icon={ICONS.MAGIC} size="3x" className="unauth-feature-icon" />
-            <h3>AI Automation</h3>
-            <p>Automate repetitive tasks and focus on what matters most.</p>
-          </div>
-          <div className="unauth-feature-item">
-            <FontAwesomeIcon icon={ICONS.CODE} size="3x" className="unauth-feature-icon" />
-            <h3>Code Generation</h3>
-            <p>Generate high-quality code snippets tailored to your needs.</p>
-          </div>
-          <div className="unauth-feature-item">
-            <FontAwesomeIcon icon={ICONS.MOBILE_ALT} size="3x" className="unauth-feature-icon" />
-            <h3>Responsive Design</h3>
-            <p>Create applications that look stunning on any device.</p>
+      <section className="lux-hero" id="top">
+        <div className="lux-hero-inner">
+          <p className="lux-eyebrow">Luxury web design studio — global, remote, meticulous.</p>
+          <h1 className="lux-hero-title">Digital Silence</h1>
+          <p className="lux-hero-subtitle">
+            We design quietly confident websites for brands who need their presence to feel like a printed magazine:
+            slow, deliberate and impossibly polished.
+          </p>
+          <div className="lux-hero-actions">
+            <Link to="/marketplace" className="lux-btn lux-btn-outline">
+              View selected work
+            </Link>
+            <Link to="/adsx/submit" className="lux-btn lux-btn-ghost">
+              Request a project
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Parallax Section */}
-      <section className="unauth-parallax">
-        <div className="unauth-parallax-content">
-          <h2>Seamless Integration</h2>
-          <p>Integrate with your favorite tools and platforms effortlessly.</p>
+      {/* Metrics Strip */}
+      <section className="lux-metrics" aria-label="Studio metrics">
+        <div className="lux-metric">
+          <span className="lux-metric-label">Clients</span>
+          <span className="lux-metric-value">40+</span>
+        </div>
+        <div className="lux-metric">
+          <span className="lux-metric-label">Years in practice</span>
+          <span className="lux-metric-value">7</span>
+        </div>
+        <div className="lux-metric">
+          <span className="lux-metric-label">Launches</span>
+          <span className="lux-metric-value">120</span>
+        </div>
+        <div className="lux-metric">
+          <span className="lux-metric-label">Repeat partners</span>
+          <span className="lux-metric-value">82%</span>
         </div>
       </section>
 
-      {/* Tech Stack Section */}
-      <section className="unauth-tech-stack" id="tech-stack">
-        <h2>Our Tech Stack</h2>
-        <div className="unauth-tech-stack-icons">
-          {slides.map((tech, index) => (
-            <div className="unauth-tech-item" key={index}>
-              <FontAwesomeIcon icon={tech.icon} size="4x" className="unauth-tech-icon" />
-              <p>{tech.title}</p>
+      {/* Feature Grid */}
+      <section className="lux-section lux-feature-section" id="work">
+        <header className="lux-section-header">
+          <p className="lux-section-kicker">What we craft</p>
+          <h2 className="lux-section-title">Quietly radical websites</h2>
+        </header>
+
+        <div className="lux-feature-grid">
+          <article className="lux-card">
+            <div className="lux-card-icon">
+              <FontAwesomeIcon icon={ICONS.STAR} />
             </div>
-          ))}
-        </div>
-      </section>
+            <h3 className="lux-card-title">Editorial brand sites</h3>
+            <p className="lux-card-body">
+              Magazine-inspired layouts with cinematic typography, built to slow visitors down and let your work
+              breathe.
+            </p>
+          </article>
 
-      {/* Episodes Section */}
-      <section className="unauth-episodes" id="episodes">
-        <h2>Episodes</h2>
-        <div className="unauth-episodes-grid">
-          {episodes.map((episode, index) => (
-            <div className="unauth-episode-item" key={index}>
-              <h3>{episode.title}</h3>
-              <p>{episode.description}</p>
-              <div className="unauth-video-container">
-                <iframe
-                  width="100%"
-                  height="200"
-                  src={`https://www.youtube.com/embed/${episode.videoId}`}
-                  title={episode.title}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
-              </div>
+          <article className="lux-card">
+            <div className="lux-card-icon">
+              <FontAwesomeIcon icon={ICONS.BOOK} />
             </div>
-          ))}
+            <h3 className="lux-card-title">Immersive case studies</h3>
+            <p className="lux-card-body">
+              Narrative-driven project pages that weave motion, copy and detail into a single continuous story.
+            </p>
+          </article>
+
+          <article className="lux-card">
+            <div className="lux-card-icon">
+              <FontAwesomeIcon icon={ICONS.BULLHORN} />
+            </div>
+            <h3 className="lux-card-title">Conversion-quiet funnels</h3>
+            <p className="lux-card-body">
+              Thoughtful, low-noise flows that favor clarity over clutter while still guiding visitors to act.
+            </p>
+          </article>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="unauth-testimonials" id="testimonials">
-        <h2>What Developers Are Saying</h2>
-        <div className="unauth-testimonials-grid">
-          <div className="unauth-testimonial-item">
-            <p>"This series has been a game-changer for my backend development skills."</p>
-            <h4>- Alex Johnson</h4>
+      {/* FAQ / Studio Section */}
+      <section className="lux-section lux-faq-section" id="studio">
+        <header className="lux-section-header">
+          <p className="lux-section-kicker">Studio notes</p>
+          <h2 className="lux-section-title">Questions, answered slowly</h2>
+        </header>
+
+        <div className="lux-faq-layout">
+          <div className="lux-faq-intro">
+            <p>
+              Every engagement begins with a listening phase. We map your voice, your boundaries and the rhythm of your
+              brand before we move a single pixel.
+            </p>
+            <p>
+              The result: websites that feel inevitable — as if they should always have looked this way.
+            </p>
           </div>
-          <div className="unauth-testimonial-item">
-            <p>"The step-by-step tutorials make complex concepts easy to grasp."</p>
-            <h4>- Maria Gomez</h4>
-          </div>
-          <div className="unauth-testimonial-item">
-            <p>"I love how the series integrates AI tools to streamline the development process."</p>
-            <h4>- Liam Smith</h4>
+
+          <div className="lux-faq-list" aria-label="Frequently asked questions">
+            {FAQ_ITEMS.map((item, index) => {
+              const isOpen = openIndex === index;
+              return (
+                <article key={item.question} className={`lux-faq-item ${isOpen ? 'is-open' : ''}`}>
+                  <button
+                    type="button"
+                    className="lux-faq-trigger"
+                    onClick={() => toggleFAQ(index)}
+                    aria-expanded={isOpen}
+                  >
+                    <span className="lux-faq-question">{item.question}</span>
+                    <span className="lux-faq-icon" aria-hidden="true">
+                      {isOpen ? '−' : '+'}
+                    </span>
+                  </button>
+                  <div className="lux-faq-panel">
+                    <p className="lux-faq-answer">{item.answer}</p>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Call to Action Section */}
-      <section className="unauth-cta" id="cta">
-        <h2>Ready to Transform Your Backend Development?</h2>
-        <Link to="/signup" className="unauth-cta-button">
-          Sign Up Now
+      {/* About + Contact Anchor */}
+      <section className="lux-section lux-about-section" id="about">
+        <header className="lux-section-header">
+          <p className="lux-section-kicker">About</p>
+          <h2 className="lux-section-title">A small studio with a long view</h2>
+        </header>
+        <div className="lux-about-body">
+          <p>
+            Unspace is a two-person studio working across time zones. We work with one primary client at a time, giving
+            your launch the kind of focus that rarely exists in larger teams.
+          </p>
+          <p id="contact">
+            For new commissions, we review projects twice a month. Share a short brief and we’ll let you know where you
+            fit in our calendar.
+          </p>
+        </div>
+      </section>
+
+      {/* Floating gloss quick menu */}
+      <nav className="lux-float-menu" aria-label="Secondary quick links">
+        <Link to="/book-exchange" className="lux-float-link">
+          BookX
         </Link>
-      </section>
-
-      {/* Footer */}
-      <footer className="unauth-footer">
-        <div className="unauth-footer-content">
-          <p>&copy; {new Date().getFullYear()} YourApp. All rights reserved.</p>
-          <ul className="unauth-footer-links">
-            <li>Privacy Policy</li>
-            <li>Terms of Service</li>
-            <li>Contact Us</li>
-          </ul>
-        </div>
-      </footer>
-    </div>
+        <Link to="/marketplace" className="lux-float-link">
+          Buy &amp; Sell
+        </Link>
+        <Link to="/community" className="lux-float-link">
+          Community
+        </Link>
+        <a href="#about" className="lux-float-link">
+          About
+        </a>
+      </nav>
+    </main>
   );
 };
 
