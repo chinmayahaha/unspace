@@ -1,0 +1,14 @@
+/* Simple UI component styles used by Button and Card */
+.btn{font-family: inherit}
+.card{font-family: inherit}
+
+/* Lightbox styles */
+.lightbox-overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(2,6,23,0.7); z-index:2000 }
+.lightbox-inner{ position:relative; display:flex; align-items:center; gap:12px; max-width:92%; max-height:86%; }
+.lightbox-image{ max-width:100%; max-height:86vh; border-radius:10px; box-shadow:0 12px 40px rgba(2,6,23,0.6) }
+.lightbox-close{ position:fixed; top:20px; right:20px; background:transparent; border:none; color:white; font-size:28px; cursor:pointer }
+.lightbox-nav{ background:rgba(0,0,0,0.35); border:none; color:white; font-size:28px; padding:6px 12px; border-radius:8px; cursor:pointer }
+.lightbox-nav.left{ margin-right:8px }
+.lightbox-nav.right{ margin-left:8px }
+.lightbox-counter{ position:fixed; bottom:18px; left:50%; transform:translateX(-50%); color:var(--muted) }
+

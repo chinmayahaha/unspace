@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ICONS } from '../config/icons';
+import logo from '../assets/unspace-logo.svg';
 import './Navigation.css';
 
 const Navigation = () => {
@@ -25,19 +26,35 @@ const Navigation = () => {
     setIsMenuOpen(false);
   };
 
-  // Don't show navigation on auth pages
-  if (location.pathname === '/signin' || location.pathname === '/signup') {
+  // Theme (light/dark) persisted in localStorage
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('theme') || 'dark';
+    } catch (e) {
+      return 'dark';
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem('theme', theme); } catch (e) {}
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+
+  // Don't show navigation on auth pages or homepage
+  if (location.pathname === '/signin' || location.pathname === '/signup' || location.pathname === '/') {
     return null;
   }
 
   return (
-    <nav className="navigation">
-      <div className="nav-container">
-        {/* Logo */}
-        <Link to="/" className="nav-logo" onClick={closeMenu}>
-          <FontAwesomeIcon icon={ICONS.ROBOT} className="nav-icon" />
-          <span>UnSpace</span>
-        </Link>
+    <>
+      <nav className="navigation">
+        <div className="nav-container">
+          {/* Logo */}
+          <Link to="/" className="nav-logo" onClick={closeMenu}>
+            <img src={logo} alt="UnSpace" className="nav-logo-img" />
+          </Link>
 
         {/* Desktop Navigation */}
         <div className="nav-menu">
@@ -53,6 +70,46 @@ const Navigation = () => {
             
             {user ? (
               <>
+                <Link 
+                  to="/marketplace" 
+                  className={`nav-link ${location.pathname.startsWith('/marketplace') ? 'active' : ''}`}
+                  onClick={closeMenu}
+                >
+                  <FontAwesomeIcon icon={ICONS.SHOPPING_CART} />
+                  Marketplace
+                </Link>
+                <Link 
+                  to="/book-exchange" 
+                  className={`nav-link ${location.pathname.startsWith('/book-exchange') ? 'active' : ''}`}
+                  onClick={closeMenu}
+                >
+                  <FontAwesomeIcon icon={ICONS.BOOK} />
+                  Book Exchange
+                </Link>
+                <Link 
+                  to="/community" 
+                  className={`nav-link ${location.pathname.startsWith('/community') ? 'active' : ''}`}
+                  onClick={closeMenu}
+                >
+                  <FontAwesomeIcon icon={ICONS.COMMENTS} />
+                  Community
+                </Link>
+                <Link 
+                  to="/businessx" 
+                  className={`nav-link ${location.pathname.startsWith('/businessx') ? 'active' : ''}`}
+                  onClick={closeMenu}
+                >
+                  <FontAwesomeIcon icon={ICONS.BRIEFCASE} />
+                  BusinessX
+                </Link>
+                <Link 
+                  to="/adsx" 
+                  className={`nav-link ${location.pathname.startsWith('/adsx') ? 'active' : ''}`}
+                  onClick={closeMenu}
+                >
+                  <FontAwesomeIcon icon={ICONS.BULLHORN} />
+                  AdsX
+                </Link>
                 <Link 
                   to="/dashboard" 
                   className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
@@ -106,6 +163,9 @@ const Navigation = () => {
               <span className="user-name">{user.name}</span>
             </div>
           )}
+          <button className="nav-theme-toggle btn secondary" onClick={toggleTheme} aria-label="Toggle theme">
+            <FontAwesomeIcon icon={theme === 'dark' ? ICONS.SUN : ICONS.MOON} />
+          </button>
         </div>
 
         {/* Mobile Menu Button */}
@@ -139,6 +199,46 @@ const Navigation = () => {
             
             {user ? (
               <>
+                <Link 
+                  to="/marketplace" 
+                  className={`nav-mobile-link ${location.pathname.startsWith('/marketplace') ? 'active' : ''}`}
+                  onClick={closeMenu}
+                >
+                  <FontAwesomeIcon icon={ICONS.SHOPPING_CART} />
+                  Marketplace
+                </Link>
+                <Link 
+                  to="/book-exchange" 
+                  className={`nav-mobile-link ${location.pathname.startsWith('/book-exchange') ? 'active' : ''}`}
+                  onClick={closeMenu}
+                >
+                  <FontAwesomeIcon icon={ICONS.BOOK} />
+                  Book Exchange
+                </Link>
+                <Link 
+                  to="/community" 
+                  className={`nav-mobile-link ${location.pathname.startsWith('/community') ? 'active' : ''}`}
+                  onClick={closeMenu}
+                >
+                  <FontAwesomeIcon icon={ICONS.COMMENTS} />
+                  Community
+                </Link>
+                <Link 
+                  to="/businessx" 
+                  className={`nav-mobile-link ${location.pathname.startsWith('/businessx') ? 'active' : ''}`}
+                  onClick={closeMenu}
+                >
+                  <FontAwesomeIcon icon={ICONS.BRIEFCASE} />
+                  BusinessX
+                </Link>
+                <Link 
+                  to="/adsx" 
+                  className={`nav-mobile-link ${location.pathname.startsWith('/adsx') ? 'active' : ''}`}
+                  onClick={closeMenu}
+                >
+                  <FontAwesomeIcon icon={ICONS.BULLHORN} />
+                  AdsX
+                </Link>
                 <Link 
                   to="/dashboard" 
                   className={`nav-mobile-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
@@ -177,9 +277,13 @@ const Navigation = () => {
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
-      {isMenuOpen && <div className="nav-overlay" onClick={closeMenu}></div>}
-    </nav>
+        {/* Mobile Menu Overlay */}
+        {isMenuOpen && <div className="nav-overlay" onClick={closeMenu}></div>}
+      </nav>
+      
+      {/* Checkered Divider - appears on all pages */}
+      <div className="checkered-divider"></div>
+    </>
   );
 };
 

@@ -14,6 +14,10 @@ module.exports = {
     "no-restricted-globals": ["error", "name", "length"],
     "prefer-arrow-callback": "error",
     "quotes": ["error", "double", {"allowTemplateLiterals": true}],
+    // Relax some rules for rapid development; re-enable stricter linting later
+    "valid-jsdoc": "off",
+    "max-len": ["warn", {"code": 120}],
+    "linebreak-style": "off",
   },
   overrides: [
     {

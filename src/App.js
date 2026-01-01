@@ -1,28 +1,59 @@
 import './App.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import './styles/global.css';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Navigation from './components/Navigation';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+
+// Import all pages
 import HomePage from './pages/HomePage';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
 import ListingDetailPage from './pages/ListingDetailPage';
 import AdminPage from './pages/AdminPage';
-import AdminRoute from './components/AdminRoute';
 
-function App() {
+// Marketplace pages
+import MarketplacePage from './pages/MarketplacePage';
+import CreateListingPage from './pages/CreateListingPage';
+
+// Book Exchange pages
+import BookExchangePage from './pages/BookExchangePage';
+import AddBookPage from './pages/AddBookPage';
+
+// Community pages
+import CommunityPage from './pages/CommunityPage';
+import CreatePostPage from './pages/CreatePostPage';
+import PostDetailPage from './pages/PostDetailPage';
+
+// BusinessX pages
+import BusinessXPage from './pages/BusinessXPage';
+import RegisterBusinessPage from './pages/RegisterBusinessPage';
+import BusinessDetailPage from './pages/BusinessDetailPage';
+
+// AdsX pages
+import AdsXPage from './pages/AdsXPage';
+import SubmitRequestPage from './pages/SubmitRequestPage';
+import RequestDetailPage from './pages/RequestDetailPage';
+
+function AppContent() {
+  const location = useLocation();
+  const showNavigation = location.pathname !== '/';
+
   return (
-    <AuthProvider>
-      <Router>
-        <div className="App">
-          <Navigation />
-          <Routes>
+    <div className="App">
+      {showNavigation && <Navigation />}
+      <Routes>
+            {/* Public routes */}
             <Route path="/" element={<HomePage />} />
-            {/* Public listing detail route available to all users */}
-            <Route path="/listing/:listingId" element={<ListingDetailPage />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
+            
+            {/* Public listing detail route */}
+            <Route path="/listing/:listingId" element={<ListingDetailPage />} />
+            
+            {/* Protected routes */}
             <Route 
               path="/dashboard" 
               element={
@@ -31,6 +62,87 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            
+            {/* Marketplace routes - public browsing enabled */}
+            <Route path="/marketplace" element={<MarketplacePage />} />
+            <Route 
+              path="/marketplace/new" 
+              element={
+                <ProtectedRoute>
+                  <CreateListingPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Book Exchange routes */}
+            <Route path="/book-exchange" element={<BookExchangePage />} />
+            <Route 
+              path="/book-exchange/add" 
+              element={
+                <ProtectedRoute>
+                  <AddBookPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Community routes */}
+            <Route path="/community" element={<CommunityPage />} />
+            <Route 
+              path="/community/new" 
+              element={
+                <ProtectedRoute>
+                  <CreatePostPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/community/post/:postId" 
+              element={
+                <ProtectedRoute>
+                  <PostDetailPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* BusinessX routes */}
+            <Route path="/businessx" element={<BusinessXPage />} />
+            <Route 
+              path="/businessx/register" 
+              element={
+                <ProtectedRoute>
+                  <RegisterBusinessPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/businessx/:businessId" 
+              element={
+                <ProtectedRoute>
+                  <BusinessDetailPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* AdsX routes */}
+            <Route path="/adsx" element={<AdsXPage />} />
+            <Route 
+              path="/adsx/submit" 
+              element={
+                <ProtectedRoute>
+                  <SubmitRequestPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/adsx/:requestId" 
+              element={
+                <ProtectedRoute>
+                  <RequestDetailPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Admin routes */}
             <Route
               path="/admin"
               element={
@@ -39,8 +151,16 @@ function App() {
                 </AdminRoute>
               }
             />
-          </Routes>
-        </div>
+      </Routes>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppContent />
       </Router>
     </AuthProvider>
   );

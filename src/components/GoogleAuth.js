@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithRedirect } from 'firebase/auth';
 import { auth } from '../firebase';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ICONS } from '../config/icons';
@@ -13,7 +13,7 @@ const GoogleAuth = ({ onSuccess, onError, buttonText = "Continue with Google", c
       provider.addScope('email');
       provider.addScope('profile');
       
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithRedirect(auth, provider);
       const user = result.user;
       
       // Extract user information

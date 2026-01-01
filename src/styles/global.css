@@ -1,0 +1,95 @@
+/* Global design tokens and themes */
+:root{
+  --bg: #0f1720;
+  --card: #0b1220;
+  --muted: #94a3b8;
+  --text: #e6eef8;
+  --accent: #054a91; /* deep navy */
+  --accent-2: #2b235b; /* deep purple */
+  --glass: rgba(255,255,255,0.04);
+}
+
+[data-theme='light']{
+  --bg: #f7fafc;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --text: #0f1720;
+  --accent: #0060DF;
+  --accent-2: #6b21a8;
+  --glass: rgba(15,23,32,0.04);
+}
+
+html, body, #root, .App{
+  height: 100%;
+  background: linear-gradient(180deg, var(--bg) 0%, color-mix(in srgb, var(--bg) 80%, black 20%) 100%);
+  color: var(--text);
+}
+
+/* Typography */
+body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+h1,h2,h3,h4{ font-family: 'Dela Gothic One', cursive; color:var(--text); margin:0 }
+
+
+/* Utility container */
+.container{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Cards */
+.card{
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.03);
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+}
+
+/* Buttons */
+.btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.btn.secondary{
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--text);
+}
+
+.btn:hover{transform: translateY(-2px); box-shadow: 0 8px 22px rgba(2,6,23,0.6);} 
+
+/* Responsive utilities */
+.row{display:flex; gap:16px; align-items:stretch;}
+.col{flex:1}
+
+@media (max-width: 768px){
+  .row{flex-direction:column}
+}
+
+/* Small form elements */
+.input, textarea{
+  width:100%;
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.04);
+  background:transparent;
+  color:var(--text);
+}
+
+/* Small helpers */
+.kicker{font-size:0.85rem; color:var(--muted);}
+.h1{font-size:1.6rem; font-weight:700}
+.h2{font-size:1.2rem; font-weight:600}
+
+/* Focus styles for accessibility */
+:focus{outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent 60%); outline-offset: 2px}

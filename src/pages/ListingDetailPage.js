@@ -3,6 +3,11 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { getFunctions, httpsCallable } from "firebase/functions";
+import Card from '../components/UI/Card';
+import Button from '../components/UI/Button';
+import Lightbox from '../components/UI/Lightbox';
+import placeholder from '../assets/placeholder-image.svg';
+import './ListingDetailPage.css';
 // Note: In a real app, you would use a library like 'react-router-dom'
 // to get the listing ID from the URL. For example:
 // import { useParams } from 'react-router-dom';
@@ -10,6 +15,8 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 const ListingDetailPage = () => {
   // Get listingId from the URL path, e.g. /listing/:listingId
   const { listingId } = useParams();
+  const [lightboxOpen, setLightboxOpen] = React.useState(false);
+  const [lightboxIndex, setLightboxIndex] = React.useState(0);
 
   // Basic guard if no listingId provided in the URL
   if (!listingId) {
@@ -20,6 +27,8 @@ const ListingDetailPage = () => {
       </div>
     );
   }
+
+  const openLightbox = (i = 0) => { setLightboxIndex(i); setLightboxOpen(true); };
 
   const handleContactSeller = async () => {
     console.log(`Attempting to contact seller for listing: ${listingId}`);
@@ -51,14 +60,32 @@ const ListingDetailPage = () => {
   };
 
   return (
-    <div>
-      <h1>Listing Details Page</h1>
-      <p>This is where you would show the title, price, and description for the item.</p>
-      
-      {/* This is the button that triggers our function call */}
-      <button onClick={handleContactSeller}>
-        Contact Seller
-      </button>
+    <div className="listing-detail-page">
+      <div className="container">
+        <Card className="detail-card">
+          <div className="detail-grid">
+            <div className="gallery">
+              <div className="main-image"> {/* clickable image opens lightbox */}
+                <img src={placeholder} alt="listing" role="button" tabIndex={0} onClick={() => openLightbox(0)} onKeyDown={(e) => e.key === 'Enter' && openLightbox(0)} />
+              </div>
+            </div>
+
+            <div className="detail-body">
+              <h1 className="detail-title">Listing {listingId}</h1>
+              <p className="detail-price">$—</p>
+              <p className="detail-desc">This area will show description, seller info, and additional metadata.</p>
+
+              <div className="detail-actions">
+                <Button onClick={handleContactSeller} className="nav-primary">Contact Seller</Button>
+                <Button className="btn secondary">Save</Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+        {lightboxOpen && (
+          <Lightbox images={[placeholder]} index={lightboxIndex} onClose={() => setLightboxOpen(false)} />
+        )}
+      </div>
     </div>
   );
 };

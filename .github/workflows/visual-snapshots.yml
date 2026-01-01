@@ -1,0 +1,32 @@
+name: Visual snapshots
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install deps
+        run: npm ci
+      - name: Start dev server
+        run: |
+          nohup npm start &
+          sleep 6
+      - name: Install playwright browsers
+        run: npx playwright install --with-deps
+      - name: Run visual screenshots
+        run: npm run visual:screenshots
+      - name: Upload snapshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-snapshots
+          path: build/visual-snapshots

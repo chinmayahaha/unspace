@@ -1,123 +1,111 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+const admin = require("firebase-admin");
+const functions = require("firebase-functions");
+const express = require("express");
+const cors = require("cors");
 
-// Require firebase-functions and prefer the v1-compatible API when available.
-// Some versions of the SDK expose different entry points; guard against
-// undefined members.
-let functions;
-try {
-  functions = require("firebase-functions");
-} catch (e) {
-  // fallback to v1 path if top-level require fails
+// Initialize Firebase Admin
+admin.initializeApp();
+
+// Set global options for functions
+functions.setGlobalOptions({maxInstances: 10});
+
+// Import handlers
+const marketplaceHandlers = require("./handlers/marketplace");
+const bookExchangeHandlers = require("./handlers/bookExchange");
+const communityHandlers = require("./handlers/community");
+const businessXHandlers = require("./handlers/businessX");
+const adsXHandlers = require("./handlers/adsX");
+const {createUserProfile} = require("./handlers/marketplace");
+const {handleStripeWebhook} = require("./services/payments");
+
+// Create Express app for HTTP endpoints
+const app = express();
+app.use(cors({origin: true}));
+app.use(express.json());
+
+// Stripe webhook endpoint
+app.post("/stripe-webhook", async (req, res) => {
   try {
-    functions = require("firebase-functions/v1");
-  } catch (err) {
-    throw e;
+    await handleStripeWebhook(req.body);
+    res.status(200).send("Webhook processed");
+  } catch (error) {
+    console.error("Webhook error:", error);
+    res.status(400).send("Webhook failed");
   }
-}
+});
 
-// setGlobalOptions is only available on some versions; call it if present
-if (functions && typeof functions.setGlobalOptions === "function") {
-  try {
-    functions.setGlobalOptions({maxInstances: 10});
-  } catch (e) {/* ignore */}
-}
+// Export HTTP app
+exports.api = functions.https.onRequest(app);
 
-// For cost control, you can set the maximum number of containers that can
-// be running at the same time. This helps mitigate unexpected traffic
-// spikes by downgrading performance instead of scaling infinitely. This is
-// a per-function limit. You can override it with `maxInstances` per
-// function.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count. We already attempted to
-// call functions.setGlobalOptions above if available.
-
-// Create and deploy your first functions
-// See: https://firebase.google.com/docs/functions/get-started
-
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
-let authTriggers = null;
-if (functions && functions.auth) {
-  authTriggers = functions.auth;
+// Auth trigger for new user creation (guarded)
+if (functions && functions.auth && typeof functions.auth.user === 'function') {
+  exports.onUserCreate = functions.auth.user().onCreate(async (user) => {
+    console.log("New user created:", user.email || "(no-email)", "uid:", user.uid);
+    return createUserProfile(user);
+  });
 } else {
-  try {
-    // Some versions expose v1 APIs under a subpath
-    const f1 = require("firebase-functions/v1");
-    if (f1 && f1.auth) {
-      authTriggers = f1.auth;
-    }
-  } catch (e) {
-    // ignore
-  }
+  // During static analysis in some environments the functions SDK may not expose auth triggers.
+  // Skip exporting the trigger to avoid throwing at deploy-time; the trigger will be a no-op
+  // in this case and should be available in a normal Functions runtime.
+  console.warn('functions.auth is not available during analysis — skipping onUserCreate export.');
 }
 
-const {createUserProfile, contactSellerHandler} = require("./handlers/marketplace");
+// Firestore trigger for AI tasks (guarded)
+if (functions && functions.firestore && typeof functions.firestore.document === 'function') {
+  exports.processAITask = functions.firestore
+      .document("aiTasks/{taskId}")
+      .onCreate(async (snap, context) => {
+        const task = snap.data();
+        console.log("AI task created:", task.type, task.status);
 
-// Register auth trigger if available (supports multiple firebase-functions versions)
-try {
-  if (authTriggers && typeof authTriggers.user === "function") {
-    const trigger = authTriggers.user();
-    if (trigger && typeof trigger.onCreate === "function") {
-      exports.onUserCreate = trigger.onCreate((user) => {
-        const email = user && user.email;
-        const uid = user && user.uid;
-        console.log("New user created:", email || "(no-email)", "uid:", uid);
-        return createUserProfile(user);
+        // This will trigger the Python function
+        // The Python function will listen to this collection and process the task
+        return null;
       });
-    }
-  } else {
-    console.warn(
-        "firebase-functions auth triggers are not available in this",
-      "environment; onUserCreate will not be registered.",
-    );
-  }
-} catch (e) {
-  console.warn("Failed to register auth trigger:", e && e.message);
+} else {
+  console.warn('functions.firestore is not available during analysis — skipping processAITask export.');
 }
 
-// Register callable HTTPS function robustly depending on functions API surface
-try {
-  if (
-    functions &&
-    functions.https &&
-    typeof functions.https.onCall === "function"
-  ) {
-    exports.contactSeller = functions.https.onCall(
-      async (data, context) => contactSellerHandler(data, context),
-    );
-  } else if (
-    functions &&
-    typeof functions.https === "function"
-  ) {
-    // Older versions may export https directly
-    exports.contactSeller = functions.https.onCall(
-      async (data, context) => contactSellerHandler(data, context),
-    );
-  } else if (
-    functions &&
-    functions.httpsCallable
-  ) {
-    // v2 style (unlikely here) - fallback to an express-style wrapper
-    exports.contactSeller = functions.https.onCall(
-      async (data, context) => contactSellerHandler(data, context),
-    );
-  } else {
-    console.warn(
-      "functions.https.onCall is not available -",
-      "contactSeller not registered.",
-    );
-  }
-} catch (e) {
-  console.warn("Failed to register callable function contactSeller:", e && e.message);
-}
+// Marketplace Functions
+exports.createListing = functions.https.onCall(marketplaceHandlers.createListing);
+exports.getListing = functions.https.onCall(marketplaceHandlers.getListing);
+exports.getAllListings = functions.https.onCall(marketplaceHandlers.getAllListings);
+exports.updateListing = functions.https.onCall(marketplaceHandlers.updateListing);
+exports.deleteListing = functions.https.onCall(marketplaceHandlers.deleteListing);
+exports.contactSeller = functions.https.onCall(marketplaceHandlers.contactSeller);
+exports.featureListing = functions.https.onCall(marketplaceHandlers.featureListing);
+
+// Book Exchange Functions
+exports.addBookForExchange = functions.https.onCall(bookExchangeHandlers.addBookForExchange);
+exports.findMatchingBooks = functions.https.onCall(bookExchangeHandlers.findMatchingBooks);
+exports.initiateExchangeRequest = functions.https.onCall(bookExchangeHandlers.initiateExchangeRequest);
+exports.manageExchangeStatus = functions.https.onCall(bookExchangeHandlers.manageExchangeStatus);
+exports.getUserExchangeRequests = functions.https.onCall(bookExchangeHandlers.getUserExchangeRequests);
+exports.getAllBooks = functions.https.onCall(bookExchangeHandlers.getAllBooks);
+
+// Community Functions
+exports.createPost = functions.https.onCall(communityHandlers.createPost);
+exports.getPosts = functions.https.onCall(communityHandlers.getPosts);
+exports.getPost = functions.https.onCall(communityHandlers.getPost);
+exports.deletePost = functions.https.onCall(communityHandlers.deletePost);
+exports.addComment = functions.https.onCall(communityHandlers.addComment);
+exports.getComments = functions.https.onCall(communityHandlers.getComments);
+exports.togglePostLike = functions.https.onCall(communityHandlers.togglePostLike);
+exports.postOfficialAnnouncement = functions.https.onCall(communityHandlers.postOfficialAnnouncement);
+
+// BusinessX Functions
+exports.registerBusiness = functions.https.onCall(businessXHandlers.registerBusiness);
+exports.getBusinessProfile = functions.https.onCall(businessXHandlers.getBusinessProfile);
+exports.getAllBusinesses = functions.https.onCall(businessXHandlers.getAllBusinesses);
+exports.updateBusinessProfile = functions.https.onCall(businessXHandlers.updateBusinessProfile);
+exports.addReview = functions.https.onCall(businessXHandlers.addReview);
+exports.getReviews = functions.https.onCall(businessXHandlers.getReviews);
+exports.verifyBusiness = functions.https.onCall(businessXHandlers.verifyBusiness);
+
+// AdsX Functions
+exports.submitServiceRequest = functions.https.onCall(adsXHandlers.submitServiceRequest);
+exports.getRequests = functions.https.onCall(adsXHandlers.getRequests);
+exports.updateRequestStatus = functions.https.onCall(adsXHandlers.updateRequestStatus);
+exports.assignRequest = functions.https.onCall(adsXHandlers.assignRequest);
+exports.promoteRequest = functions.https.onCall(adsXHandlers.promoteRequest);
+exports.getRequestDetails = functions.https.onCall(adsXHandlers.getRequestDetails);

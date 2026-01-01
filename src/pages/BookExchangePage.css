@@ -1,0 +1,22 @@
+.book-exchange-page { min-height: 100vh; padding: 28px 0; background:var(--bg) }
+.book-exchange-content { max-width:1200px; margin:0 auto }
+.search-section { background:var(--card-bg); padding:16px; border-radius:12px; box-shadow:var(--card-shadow); margin-bottom:20px }
+.search-bar{ display:flex; gap:12px; align-items:center }
+.search-bar input{ flex:1; padding:10px; border-radius:10px; border:1px solid rgba(0,0,0,0.06); background:transparent; color:var(--text) }
+.search-btn{ padding:10px 14px; border-radius:10px }
+.books-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:18px }
+.book-card{ overflow:hidden; border-radius:12px; transition:transform .18s; background:var(--card-bg); box-shadow:var(--card-shadow) }
+.book-card:hover{ transform:translateY(-4px) }
+.book-image{ height:200px; overflow:hidden }
+.book-image img{ width:100%; height:100%; object-fit:cover }
+.no-image{ width:100%; height:100%; background:var(--muted-bg); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.8rem }
+.book-content{ padding:12px }
+.book-title{ font-size:1.05rem; font-weight:700; margin-bottom:6px }
+.book-author, .book-isbn{ color:var(--muted); font-size:0.9rem }
+.book-meta{ display:flex; gap:8px; margin-bottom:8px }
+.book-condition, .book-course{ background:rgba(0,0,0,0.03); padding:6px 8px; border-radius:8px; color:var(--text); font-size:0.85rem }
+.book-description{ color:var(--muted); font-size:0.92rem; line-height:1.4 }
+.book-actions{ margin-top:12px }
+.book-actions .btn{ width:100%; justify-content:center }
+.no-books{ text-align:center; padding:2.6rem; color:var(--muted) }
+@media (max-width: 768px){ .search-bar{ flex-direction:column } .books-grid{ grid-template-columns:1fr } }

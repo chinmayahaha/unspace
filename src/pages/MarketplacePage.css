@@ -1,0 +1,37 @@
+/* Marketplace Page Styles (themed) */
+.marketplace-page { min-height:100vh; padding: 28px 0; background:var(--bg) }
+.page-header { text-align: left; margin-bottom: 18px }
+.page-header h1{ font-size:1.6rem; margin:0 }
+.page-header p{ color:var(--muted); margin-top:6px }
+
+.marketplace-content{ display:flex; gap:24px; align-items:flex-start }
+.filters-section{ width:300px; min-width:240px }
+.filters{ padding:12px; background:var(--card-bg); border-radius:12px; box-shadow:var(--card-shadow) }
+.filter-group{ margin-bottom:10px }
+.filter-group label{ color:var(--muted); font-weight:600; margin-bottom:6px; display:block }
+.filter-group input,.filter-group select{ width:100%; padding:10px; border-radius:8px; border:1px solid rgba(0,0,0,0.06); background:transparent; color:var(--text) }
+.search-btn{ margin-top:8px }
+
+.actions-section{ display:flex; justify-content:flex-end; margin:12px 0 }
+
+.listings-section{ flex:1 }
+.listings-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:18px }
+
+.listing-card{ padding:0; overflow:hidden }
+.listing-card-inner{ display:flex; flex-direction:column; height:100% }
+.listing-media{ height:200px; overflow:hidden; position:relative; background:var(--muted-bg) }
+.listing-media img{ width:100%; height:100%; object-fit:cover }
+.no-image{ display:flex; align-items:center; justify-content:center; height:100%; color:var(--muted); font-size:1.6rem }
+.featured-badge{ position:absolute; top:12px; left:12px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:var(--bg); padding:6px 8px; border-radius:8px; font-weight:600 }
+
+.listing-body{ padding:16px; display:flex; flex-direction:column; gap:10px }
+.listing-title{ font-size:1.05rem; margin:0 }
+.listing-description{ color:var(--muted); font-size:0.92rem; margin:0 }
+.listing-meta{ display:flex; gap:8px; color:var(--muted); font-size:0.85rem }
+.listing-footer{ display:flex; justify-content:space-between; align-items:center; gap:8px }
+.listing-price{ font-weight:700; color:var(--accent) }
+.listing-actions{ display:flex; gap:8px }
+
+/* Responsive */
+@media (max-width: 1100px){ .listings-grid{ grid-template-columns: repeat(2, 1fr) } .filters-section{ display:none } .marketplace-content{ flex-direction:column } }
+@media (max-width: 600px){ .listings-grid{ grid-template-columns: 1fr } .listing-media{ height:160px } }

@@ -1,0 +1,26 @@
+/* BusinessX page — themed card layout */
+.business-x-page { padding: 20px 12px; }
+.business-x-page .page-header { margin-bottom: 18px }
+.business-x-page .page-header h1{ font-size:1.5rem; margin:0 }
+.business-x-page .page-header p{ color:var(--muted); margin-top:6px }
+
+.business-x-page .actions-section{ display:flex; justify-content:flex-end; margin-bottom:12px }
+
+.business-list{ display:grid; grid-template-columns: repeat(3, 1fr); gap:18px }
+.business-card{ display:flex; flex-direction:column; overflow:hidden }
+.business-card .business-image{ height:160px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); display:flex; align-items:center; justify-content:center }
+.business-card img{ width:100%; height:100%; object-fit:cover }
+.business-card .business-body{ padding:12px; display:flex; flex-direction:column; gap:8px }
+.business-name{ font-weight:700; font-size:1.05rem }
+.business-category{ color:var(--muted); font-size:0.9rem }
+.business-actions{ display:flex; gap:8px; margin-top:auto }
+
+.business-card .promoted-badge{ position:absolute; top:12px; right:12px; background:var(--accent); color:var(--bg); padding:6px 8px; border-radius:8px; font-weight:600 }
+
+/* Mobile responsive */
+@media (max-width: 1024px){ .business-list{ grid-template-columns: repeat(2, 1fr) } .business-x-page .filters-section{ display:none } }
+@media (max-width: 600px){ .business-list{ grid-template-columns: 1fr } .business-card .business-image{ height:140px } }
+
+/* Utilities for buttons used in pages */
+.nav-primary{ background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:var(--bg); padding:8px 12px; border-radius:8px }
+.btn.secondary{ background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--text); padding:8px 10px; border-radius:8px }
