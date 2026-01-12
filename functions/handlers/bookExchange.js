@@ -2,15 +2,49 @@ const admin = require("firebase-admin");
 const {logUserAction} = require("../services/analytics");
 
 /**
- * Add a book for exchange
+ * HELPER: Unwraps data safely
+ */
+function unwrapData(data) {
+  if (!data) return {}; 
+  if (typeof data === 'object' && data.data) {
+    return data.data;
+  }
+  return data;
+}
+
+/**
+ * HELPER: Get User ID (With Emulator Fallback)
+ * This allows you to test ALL features on localhost without auth errors.
+ */
+function getUserId(context) {
+  // 1. Try real Auth
+  if (context.auth && context.auth.uid) {
+    return context.auth.uid;
+  }
+  // 2. Emulator Fallback
+  const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true' || 
+                     process.env.FIREBASE_AUTH_EMULATOR_HOST;
+  if (isEmulator) {
+    return "emulator-test-user-123"; 
+  }
+  return null;
+}
+
+/**
+ * 1. Add a Book
+ * UPDATED: Handles new form fields (Course, Semester, Image) + Auth Bypass
  */
 async function addBookForExchange(data, context) {
-  const {title, author, isbn, condition, description, imageUrl} = data;
-  const userId = context.auth?.uid;
+  const userId = getUserId(context); 
+  if (!userId) throw new Error("Authentication required");
 
-  if (!userId) {
-    throw new Error("Authentication required");
-  }
+  const input = unwrapData(data);
+  // Destructure all fields
+  const {
+      title, author, isbn, condition, 
+      description, imageUrl, course, 
+      semester, price, edition
+  } = input;
 
   if (!title || !author) {
     throw new Error("Title and author are required");
@@ -21,40 +55,47 @@ async function addBookForExchange(data, context) {
 
   const bookData = {
     id: bookRef.id,
+    ownerId: userId,
     title,
     author,
     isbn: isbn || "",
+    edition: edition || "",
     condition: condition || "good",
     description: description || "",
-    imageUrl: imageUrl || "",
-    ownerId: userId,
+    imageUrl: imageUrl || "", // Stores Base64 string directly
+    course: course || "",
+    semester: semester || "",
+    price: price ? parseFloat(price) : 0,
     status: "available",
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   await bookRef.set(bookData);
 
-  // Log analytics
-  await logUserAction(userId, "book_added", {
-    bookId: bookRef.id,
-    title,
-    author,
-  });
+  // Silent Analytics
+  try {
+      await logUserAction(userId, "book_added", {
+        bookId: bookRef.id,
+        title,
+        course
+      });
+  } catch (e) {
+      console.warn("Analytics log failed", e);
+  }
 
-  return {bookId: bookRef.id, ...bookData};
+  return {bookId: bookRef.id, success: true};
 }
 
 /**
- * Find matching books for exchange
+ * 2. Find matching books for exchange
  */
 async function findMatchingBooks(data, context) {
-  const {userId: targetUserId, bookId} = data;
-  const currentUserId = context.auth?.uid;
-
-  if (!currentUserId) {
-    throw new Error("Authentication required");
-  }
+  const input = unwrapData(data);
+  const {userId: targetUserId, bookId} = input;
+  
+  const currentUserId = getUserId(context); // Updated to use Helper
+  if (!currentUserId) throw new Error("Authentication required");
 
   if (!targetUserId && !bookId) {
     throw new Error("Either userId or bookId is required");
@@ -80,16 +121,14 @@ async function findMatchingBooks(data, context) {
   // If specific book requested, find matches for that book
   if (bookId) {
     const targetBookDoc = await db.collection("books").doc(bookId).get();
-    if (!targetBookDoc.exists) {
-      throw new Error("Book not found");
-    }
+    if (!targetBookDoc.exists) throw new Error("Book not found");
 
     const targetBook = targetBookDoc.data();
     if (targetBook.ownerId === currentUserId) {
       throw new Error("Cannot exchange with yourself");
     }
 
-    // Find books by the same author or similar genre
+    // Find books by the same author or similar genre (simple logic for now)
     const matchesSnapshot = await db.collection("books")
         .where("ownerId", "==", targetBook.ownerId)
         .where("status", "==", "available")
@@ -100,11 +139,7 @@ async function findMatchingBooks(data, context) {
       ...doc.data(),
     }));
 
-    return {
-      targetBook,
-      userBooks,
-      matches,
-    };
+    return { targetBook, userBooks, matches };
   }
 
   // If userId provided, find all available books from that user
@@ -119,91 +154,88 @@ async function findMatchingBooks(data, context) {
       ...doc.data(),
     }));
 
-    return {
-      userBooks,
-      targetBooks,
-    };
+    return { userBooks, targetBooks };
   }
 
   return {matches: []};
 }
 
+
+
 /**
- * Initiate exchange request
+ * 3. Initiate exchange request (FIXED: Supports simple requests + Notifications)
  */
 async function initiateExchangeRequest(data, context) {
-  const {targetBookId, offeredBookId, message} = data;
-  const userId = context.auth?.uid;
+  const input = unwrapData(data);
+  const {targetBookId, offeredBookId, message} = input;
+  
+  const userId = getUserId(context); 
+  if (!userId) throw new Error("Authentication required");
 
-  if (!userId) {
-    throw new Error("Authentication required");
-  }
-
-  if (!targetBookId || !offeredBookId) {
-    throw new Error("Target book and offered book IDs are required");
+  if (!targetBookId) {
+    throw new Error("Target book ID is required");
   }
 
   const db = admin.firestore();
 
-  // Verify both books exist and are available
-  const [targetBookDoc, offeredBookDoc] = await Promise.all([
-    db.collection("books").doc(targetBookId).get(),
-    db.collection("books").doc(offeredBookId).get(),
-  ]);
-
-  if (!targetBookDoc.exists || !offeredBookDoc.exists) {
-    throw new Error("One or both books not found");
-  }
-
+  // 1. Get the target book
+  const targetBookDoc = await db.collection("books").doc(targetBookId).get();
+  if (!targetBookDoc.exists) throw new Error("Target book not found");
   const targetBook = targetBookDoc.data();
-  const offeredBook = offeredBookDoc.data();
 
   if (targetBook.ownerId === userId) {
-    throw new Error("Cannot exchange with yourself");
+    throw new Error("Cannot request your own book");
   }
 
-  if (offeredBook.ownerId !== userId) {
-    throw new Error("You don't own the offered book");
+  // 2. (Optional) Validate offered book if provided
+  let offeredBookData = null;
+  if (offeredBookId) {
+      const offeredDoc = await db.collection("books").doc(offeredBookId).get();
+      if (offeredDoc.exists) {
+          offeredBookData = offeredDoc.data();
+          if (offeredBookData.ownerId !== userId) throw new Error("You don't own the offered book");
+      }
   }
 
-  if (targetBook.status !== "available" || offeredBook.status !== "available") {
-    throw new Error("One or both books are not available");
-  }
-
-  // Create exchange request
+  // 3. Create Request
   const exchangeRef = db.collection("exchangeRequests").doc();
   await exchangeRef.set({
     id: exchangeRef.id,
     requesterId: userId,
     targetBookId,
-    offeredBookId,
+    offeredBookId: offeredBookId || null, // Can be null now
     targetOwnerId: targetBook.ownerId,
-    message: message || "",
+    message: message || "I am interested in this book.",
     status: "pending",
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
   });
 
-  // Log analytics
-  await logUserAction(userId, "exchange_requested", {
-    exchangeId: exchangeRef.id,
-    targetBookId,
-    offeredBookId,
+  // 4. SEND NOTIFICATION (So it shows up on Dashboard!)
+  await db.collection("notifications").add({
+    toUserId: targetBook.ownerId,
+    fromUserId: userId,
+    type: "book_request",
+    message: message || "I'm interested in your book!",
+    item: targetBook.title,
+    itemId: targetBookId,
+    relatedId: exchangeRef.id, // Link to the exchange request
+    createdAt: new Date(),
+    read: false
   });
 
-  return {exchangeId: exchangeRef.id, status: "pending"};
+  return {exchangeId: exchangeRef.id, status: "pending", success: true};
 }
 
 /**
- * Manage exchange status (accept/decline)
+ * 4. Manage exchange status (accept/decline)
  */
 async function manageExchangeStatus(data, context) {
-  const {exchangeId, action} = data;
-  const userId = context.auth?.uid;
-
-  if (!userId) {
-    throw new Error("Authentication required");
-  }
+  const input = unwrapData(data);
+  const {exchangeId, action} = input;
+  
+  const userId = getUserId(context); // Updated to use Helper
+  if (!userId) throw new Error("Authentication required");
 
   if (!exchangeId || !action) {
     throw new Error("Exchange ID and action are required");
@@ -217,13 +249,11 @@ async function manageExchangeStatus(data, context) {
   const exchangeRef = db.collection("exchangeRequests").doc(exchangeId);
   const exchangeDoc = await exchangeRef.get();
 
-  if (!exchangeDoc.exists) {
-    throw new Error("Exchange request not found");
-  }
+  if (!exchangeDoc.exists) throw new Error("Exchange request not found");
 
   const exchange = exchangeDoc.data();
 
-  // Only the target owner can accept/decline
+  //Only the target owner can accept/decline
   if (exchange.targetOwnerId !== userId) {
     throw new Error("Not authorized to manage this exchange");
   }
@@ -234,64 +264,61 @@ async function manageExchangeStatus(data, context) {
 
   const updateData = {
     status: action === "accept" ? "accepted" : "declined",
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: new Date(),
   };
 
   if (action === "accept") {
-    updateData.acceptedAt = admin.firestore.FieldValue.serverTimestamp();
+    updateData.acceptedAt = new Date();
 
     // Mark both books as exchanged
     await Promise.all([
       db.collection("books").doc(exchange.targetBookId).update({
         status: "exchanged",
-        exchangedAt: admin.firestore.FieldValue.serverTimestamp(),
+        exchangedAt: new Date(),
       }),
       db.collection("books").doc(exchange.offeredBookId).update({
         status: "exchanged",
-        exchangedAt: admin.firestore.FieldValue.serverTimestamp(),
+        exchangedAt: new Date(),
       }),
     ]);
   } else {
-    updateData.declinedAt = admin.firestore.FieldValue.serverTimestamp();
+    updateData.declinedAt = new Date();
   }
 
   await exchangeRef.update(updateData);
 
-  // Log analytics
-  await logUserAction(userId, `exchange_${action}ed`, {
-    exchangeId,
-    requesterId: exchange.requesterId,
-  });
+  try {
+      await logUserAction(userId, `exchange_${action}ed`, {
+        exchangeId,
+        requesterId: exchange.requesterId,
+      });
+  } catch (e) {}
 
   return {success: true, status: updateData.status};
 }
 
 /**
- * Get user's exchange requests
+ * 5. Get user's exchange requests
  */
 async function getUserExchangeRequests(data, context) {
-  const {type = "all"} = data; // "sent", "received", "all"
-  const userId = context.auth?.uid;
-
-  if (!userId) {
-    throw new Error("Authentication required");
-  }
+  const input = unwrapData(data);
+  const {type = "all"} = input; // "sent", "received", "all"
+  
+  const userId = getUserId(context); // Updated to use Helper
+  if (!userId) throw new Error("Authentication required");
 
   const db = admin.firestore();
   let query;
 
   switch (type) {
     case "sent":
-      query = db.collection("exchangeRequests")
-          .where("requesterId", "==", userId);
+      query = db.collection("exchangeRequests").where("requesterId", "==", userId);
       break;
     case "received":
-      query = db.collection("exchangeRequests")
-          .where("targetOwnerId", "==", userId);
+      query = db.collection("exchangeRequests").where("targetOwnerId", "==", userId);
       break;
     default:
-      query = db.collection("exchangeRequests")
-          .where("requesterId", "==", userId);
+      query = db.collection("exchangeRequests").where("requesterId", "==", userId);
       break;
   }
 
@@ -305,10 +332,11 @@ async function getUserExchangeRequests(data, context) {
 }
 
 /**
- * Get all available books
+ * 6. Get all available books
  */
 async function getAllBooks(data, context) {
-  const {limit = 20, lastDocId, searchTerm} = data;
+  const input = unwrapData(data);
+  const {limit = 20, lastDocId, searchTerm} = input;
 
   const db = admin.firestore();
   let query = db.collection("books")
@@ -317,7 +345,9 @@ async function getAllBooks(data, context) {
 
   if (lastDocId) {
     const lastDoc = await db.collection("books").doc(lastDocId).get();
-    query = query.startAfter(lastDoc);
+    if (lastDoc.exists) {
+        query = query.startAfter(lastDoc);
+    }
   }
 
   query = query.limit(limit);
@@ -333,7 +363,8 @@ async function getAllBooks(data, context) {
     const searchLower = searchTerm.toLowerCase();
     books = books.filter((book) =>
       book.title.toLowerCase().includes(searchLower) ||
-      book.author.toLowerCase().includes(searchLower),
+      book.author.toLowerCase().includes(searchLower) ||
+      (book.course && book.course.toLowerCase().includes(searchLower))
     );
   }
 

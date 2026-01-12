@@ -1,9 +1,20 @@
 import React from 'react';
-import './ui.css';
+import './Button.css'; 
+/* REMOVED import './ui.css' - Prevents CSS leakage/conflicts */
 
-const Button = ({children, className = '', ...props}) => {
+const Button = ({
+    children, 
+    variant = 'primary', // 'primary' | 'secondary' | 'outline'
+    className = '', 
+    ...props
+}) => {
+  // Dynamically generate class: "lux-btn-primary" or "lux-btn-outline"
+  const buttonClass = `lux-btn-${variant} ${className}`;
+  
   return (
-    <button className={`btn ${className}`} {...props}>{children}</button>
+    <button className={buttonClass} {...props}>
+        {children}
+    </button>
   );
 };
 

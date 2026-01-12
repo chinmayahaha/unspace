@@ -1,9 +1,13 @@
 import React from 'react';
-import './ui.css';
+import './Card.css';
+/* REMOVED import './ui.css' */
 
 const Card = ({children, className = '', ...props}) => {
   return (
-    <div className={`card ${className}`} {...props}>{children}</div>
+    /* Fix: Now matches the CSS selector */
+    <div className={`lux-card ${className}`} {...props}>
+        {children}
+    </div>
   );
 };
 

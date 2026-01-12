@@ -14,11 +14,6 @@
     ]
   },
   "emulators": {
-    "apphosting": {
-      "port": 5002,
-      "rootDirectory": "./",
-      "startCommand": "npm run dev"
-    },
     "auth": {
       "port": 9099
     },
@@ -28,23 +23,8 @@
     "firestore": {
       "port": 8080
     },
-    "database": {
-      "port": 9000
-    },
-    "hosting": {
-      "port": 5000
-    },
-    "pubsub": {
-      "port": 8085
-    },
     "storage": {
       "port": 9199
-    },
-    "eventarc": {
-      "port": 9299
-    },
-    "tasks": {
-      "port": 9499
     },
     "ui": {
       "enabled": true
@@ -53,12 +33,12 @@
   },
   "firestore": {
     "database": "unspace4",
-    "location": "asia-south1",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
   "functions": [
     {
+      "source": "functions",
       "codebase": "default",
       "ignore": [
         "node_modules",
@@ -66,21 +46,9 @@
         "firebase-debug.log",
         "firebase-debug.*.log",
         "*.local"
-      ],
-      "source": "functions"
+      ]
     }
   ],
-  "apphosting": {
-    "backendId": "unspace4",
-    "rootDir": "/",
-    "ignore": [
-      "node_modules",
-      ".git",
-      "firebase-debug.log",
-      "firebase-debug.*.log",
-      "functions"
-    ]
-  },
   "storage": {
     "rules": "storage.rules"
   }

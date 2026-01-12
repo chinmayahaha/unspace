@@ -1,166 +1,111 @@
-import './App.css';
+/* src/App.js */
+import React, { Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+// CONTEXT (Critical: Prevents "White Screen" crashes on Auth pages)
+import { AuthProvider } from './features/auth/context/AuthContext';
+
+// LAYOUTS
+import Layout from './components/layout/Layout'; 
+
+// GLOBAL STYLES
+
 import './styles/global.css';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import Navigation from './components/Navigation';
-import ProtectedRoute from './components/ProtectedRoute';
-import AdminRoute from './components/AdminRoute';
 
-// Import all pages
-import HomePage from './pages/HomePage';
-import SignIn from './pages/SignIn';
-import SignUp from './pages/SignUp';
-import Dashboard from './pages/Dashboard';
-import ListingDetailPage from './pages/ListingDetailPage';
-import AdminPage from './pages/AdminPage';
+// --- LAZY LOADED PAGES ---
+const HomePage = React.lazy(() => import('./pages/HomePage'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const TermsPage = React.lazy(() => import('./pages/TermsPage')); 
 
-// Marketplace pages
-import MarketplacePage from './pages/MarketplacePage';
-import CreateListingPage from './pages/CreateListingPage';
 
-// Book Exchange pages
-import BookExchangePage from './pages/BookExchangePage';
-import AddBookPage from './pages/AddBookPage';
+// Uncomment when we build it
+const ContactPage = React.lazy(() => import('./pages/ContactPage'));
 
-// Community pages
-import CommunityPage from './pages/CommunityPage';
-import CreatePostPage from './pages/CreatePostPage';
-import PostDetailPage from './pages/PostDetailPage';
+// Auth
+const SignIn = React.lazy(() => import('./features/auth/pages/SignIn'));
+const SignUp = React.lazy(() => import('./features/auth/pages/SignUp'));
+const AdminPage = React.lazy(() => import('./pages/AdminPage'));
 
-// BusinessX pages
-import BusinessXPage from './pages/BusinessXPage';
-import RegisterBusinessPage from './pages/RegisterBusinessPage';
-import BusinessDetailPage from './pages/BusinessDetailPage';
+// Marketplace
+const MarketplacePage = React.lazy(() => import('./features/marketplace/pages/MarketplacePage'));
+const CreateListingPage = React.lazy(() => import('./features/marketplace/pages/CreateListingPage'));
+const ListingDetailPage = React.lazy(() => import('./features/marketplace/pages/ListingDetailPage'));
 
-// AdsX pages
-import AdsXPage from './pages/AdsXPage';
-import SubmitRequestPage from './pages/SubmitRequestPage';
-import RequestDetailPage from './pages/RequestDetailPage';
+// Books
+const BookExchangePage = React.lazy(() => import('./features/books/pages/BookExchangePage'));
+const AddBookPage = React.lazy(() => import('./features/books/pages/AddBookPage'));
 
-function AppContent() {
-  const location = useLocation();
-  const showNavigation = location.pathname !== '/';
+// Community
+const CommunityPage = React.lazy(() => import('./features/community/pages/CommunityPage'));
+const CreatePostPage = React.lazy(() => import('./features/community/pages/CreatePostPage'));
+const PostDetailPage = React.lazy(() => import('./features/community/pages/PostDetailPage'));
 
-  return (
-    <div className="App">
-      {showNavigation && <Navigation />}
-      <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/signup" element={<SignUp />} />
-            
-            {/* Public listing detail route */}
-            <Route path="/listing/:listingId" element={<ListingDetailPage />} />
-            
-            {/* Protected routes */}
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Marketplace routes - public browsing enabled */}
-            <Route path="/marketplace" element={<MarketplacePage />} />
-            <Route 
-              path="/marketplace/new" 
-              element={
-                <ProtectedRoute>
-                  <CreateListingPage />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Book Exchange routes */}
-            <Route path="/book-exchange" element={<BookExchangePage />} />
-            <Route 
-              path="/book-exchange/add" 
-              element={
-                <ProtectedRoute>
-                  <AddBookPage />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Community routes */}
-            <Route path="/community" element={<CommunityPage />} />
-            <Route 
-              path="/community/new" 
-              element={
-                <ProtectedRoute>
-                  <CreatePostPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/community/post/:postId" 
-              element={
-                <ProtectedRoute>
-                  <PostDetailPage />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* BusinessX routes */}
-            <Route path="/businessx" element={<BusinessXPage />} />
-            <Route 
-              path="/businessx/register" 
-              element={
-                <ProtectedRoute>
-                  <RegisterBusinessPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/businessx/:businessId" 
-              element={
-                <ProtectedRoute>
-                  <BusinessDetailPage />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* AdsX routes */}
-            <Route path="/adsx" element={<AdsXPage />} />
-            <Route 
-              path="/adsx/submit" 
-              element={
-                <ProtectedRoute>
-                  <SubmitRequestPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/adsx/:requestId" 
-              element={
-                <ProtectedRoute>
-                  <RequestDetailPage />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Admin routes */}
-            <Route
-              path="/admin"
-              element={
-                <AdminRoute>
-                  <AdminPage />
-                </AdminRoute>
-              }
-            />
-      </Routes>
-    </div>
-  );
-}
+// Ads / Services (AdsX)
+const AdsXPage = React.lazy(() => import('./features/ads/pages/AdsXPage'));
+const SubmitRequestPage = React.lazy(() => import('./features/ads/pages/SubmitRequestPage'));
+const RequestDetailPage = React.lazy(() => import('./features/ads/pages/RequestDetailPage'));
+
+// Business (BusinessX)
+const BusinessXPage = React.lazy(() => import('./features/business/pages/BusinessXPage'));
+const RegisterBusinessPage = React.lazy(() => import('./features/business/pages/RegisterBusinessPage'));
+const BusinessDetailPage = React.lazy(() => import('./features/business/pages/BusinessDetailPage'));
+
+// Loading Screen
+const Loading = () => <div style={{ color: 'white', padding: '2rem', textAlign: 'center' }}>Loading Unspace...</div>;
 
 function App() {
   return (
+    // We wrap everything in AuthProvider so 'useAuth' works in your other files
     <AuthProvider>
       <Router>
-        <AppContent />
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            {/* ========================================================= */}
+            {/* 1. PUBLIC ROUTES (No Sidebar, Full Screen)                */}
+            {/* ========================================================= */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/terms" element={<Layout><TermsPage /></Layout>} />
+            
+             {/* Admin Route - In real app, wrap this with <AdminRoute> protection */}
+              <Route path="/admin" element={<Layout><AdminPage /></Layout>} />
+
+            {/* ========================================================= */}
+            {/* 2. APP ROUTES (Wrapped in Sidebar Layout)                 */}
+            {/* ========================================================= */}
+            
+            {/* Dashboard */}
+            <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+
+            <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
+
+            {/* Marketplace Routes */}
+            <Route path="/marketplace" element={<Layout><MarketplacePage /></Layout>} />
+            <Route path="/marketplace/new" element={<Layout><CreateListingPage /></Layout>} />
+            <Route path="/listing/:listingId" element={<Layout><ListingDetailPage /></Layout>} />
+
+            {/* Book Exchange Routes */}
+            <Route path="/book-exchange" element={<Layout><BookExchangePage /></Layout>} />
+            <Route path="/book-exchange/add" element={<Layout><AddBookPage /></Layout>} />
+
+            {/* Community Routes */}
+            <Route path="/community" element={<Layout><CommunityPage /></Layout>} />
+            <Route path="/community/new" element={<Layout><CreatePostPage /></Layout>} />
+            <Route path="/community/post/:postId" element={<Layout><PostDetailPage /></Layout>} />
+
+            {/* AdsX (Service Requests) Routes */}
+            <Route path="/adsx" element={<Layout><AdsXPage /></Layout>} />
+            <Route path="/adsx/submit" element={<Layout><SubmitRequestPage /></Layout>} />
+            <Route path="/adsx/:requestId" element={<Layout><RequestDetailPage /></Layout>} />
+
+            {/* BusinessX Routes */}
+            <Route path="/businessx" element={<Layout><BusinessXPage /></Layout>} />
+            <Route path="/businessx/register" element={<Layout><RegisterBusinessPage /></Layout>} />
+            <Route path="/businessx/:businessId" element={<Layout><BusinessDetailPage /></Layout>} />
+
+          </Routes>
+        </Suspense>
       </Router>
     </AuthProvider>
   );

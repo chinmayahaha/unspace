@@ -10,6 +10,7 @@ admin.initializeApp();
 functions.setGlobalOptions({maxInstances: 10});
 
 // Import handlers
+const adminHandlers = require("./handlers/admin");
 const marketplaceHandlers = require("./handlers/marketplace");
 const bookExchangeHandlers = require("./handlers/bookExchange");
 const communityHandlers = require("./handlers/community");
@@ -44,9 +45,6 @@ if (functions && functions.auth && typeof functions.auth.user === 'function') {
     return createUserProfile(user);
   });
 } else {
-  // During static analysis in some environments the functions SDK may not expose auth triggers.
-  // Skip exporting the trigger to avoid throwing at deploy-time; the trigger will be a no-op
-  // in this case and should be available in a normal Functions runtime.
   console.warn('functions.auth is not available during analysis — skipping onUserCreate export.');
 }
 
@@ -59,7 +57,6 @@ if (functions && functions.firestore && typeof functions.firestore.document === 
         console.log("AI task created:", task.type, task.status);
 
         // This will trigger the Python function
-        // The Python function will listen to this collection and process the task
         return null;
       });
 } else {
@@ -70,10 +67,19 @@ if (functions && functions.firestore && typeof functions.firestore.document === 
 exports.createListing = functions.https.onCall(marketplaceHandlers.createListing);
 exports.getListing = functions.https.onCall(marketplaceHandlers.getListing);
 exports.getAllListings = functions.https.onCall(marketplaceHandlers.getAllListings);
+exports.getUserListings = functions.https.onCall(marketplaceHandlers.getUserListings); // <--- ADDED THIS LINE
 exports.updateListing = functions.https.onCall(marketplaceHandlers.updateListing);
 exports.deleteListing = functions.https.onCall(marketplaceHandlers.deleteListing);
 exports.contactSeller = functions.https.onCall(marketplaceHandlers.contactSeller);
 exports.featureListing = functions.https.onCall(marketplaceHandlers.featureListing);
+
+// 5. ADMIN (KRYPTONITE)
+// =========================================================
+exports.getAdminStats = functions.https.onCall(adminHandlers.getAdminStats);
+exports.getAllUsers = functions.https.onCall(adminHandlers.getAllUsers);
+exports.banUser = functions.https.onCall(adminHandlers.banUser);
+exports.deleteAnyItem = functions.https.onCall(adminHandlers.deleteAnyItem);
+exports.makeMeAdmin = functions.https.onCall(adminHandlers.makeMeAdmin);
 
 // Book Exchange Functions
 exports.addBookForExchange = functions.https.onCall(bookExchangeHandlers.addBookForExchange);
@@ -84,14 +90,14 @@ exports.getUserExchangeRequests = functions.https.onCall(bookExchangeHandlers.ge
 exports.getAllBooks = functions.https.onCall(bookExchangeHandlers.getAllBooks);
 
 // Community Functions
-exports.createPost = functions.https.onCall(communityHandlers.createPost);
-exports.getPosts = functions.https.onCall(communityHandlers.getPosts);
-exports.getPost = functions.https.onCall(communityHandlers.getPost);
-exports.deletePost = functions.https.onCall(communityHandlers.deletePost);
-exports.addComment = functions.https.onCall(communityHandlers.addComment);
-exports.getComments = functions.https.onCall(communityHandlers.getComments);
-exports.togglePostLike = functions.https.onCall(communityHandlers.togglePostLike);
-exports.postOfficialAnnouncement = functions.https.onCall(communityHandlers.postOfficialAnnouncement);
+//exports.createPost = functions.https.onCall(communityHandlers.createPost);
+//exports.getPosts = functions.https.onCall(communityHandlers.getPosts);
+//exports.getPost = functions.https.onCall(communityHandlers.getPost);
+//exports.deletePost = functions.https.onCall(communityHandlers.deletePost);
+//exports.addComment = functions.https.onCall(communityHandlers.addComment);
+//exports.getComments = functions.https.onCall(communityHandlers.getComments);
+//exports.togglePostLike = functions.https.onCall(communityHandlers.togglePostLike);
+//exports.postOfficialAnnouncement = functions.https.onCall(communityHandlers.postOfficialAnnouncement);
 
 // BusinessX Functions
 exports.registerBusiness = functions.https.onCall(businessXHandlers.registerBusiness);
@@ -109,3 +115,4 @@ exports.updateRequestStatus = functions.https.onCall(adsXHandlers.updateRequestS
 exports.assignRequest = functions.https.onCall(adsXHandlers.assignRequest);
 exports.promoteRequest = functions.https.onCall(adsXHandlers.promoteRequest);
 exports.getRequestDetails = functions.https.onCall(adsXHandlers.getRequestDetails);
+exports.applyToRequest = functions.https.onCall(adsXHandlers.applyToRequest);

@@ -1,0 +1,21 @@
+/* src/components/UI/Card.css */
+
+.lux-card {
+  /* Glassmorphism */
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg); /* Consistent Radius */
+  padding: 1.5rem;
+  
+  color: var(--text-main);
+  
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.lux-card:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}

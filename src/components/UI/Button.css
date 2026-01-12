@@ -1,0 +1,39 @@
+/* src/components/UI/Button.css */
+
+/* Base Styles (DRY) */
+[class^="lux-btn-"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-family: var(--font-heading);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+/* Primary Variant */
+.lux-btn-primary {
+  background: var(--text-main); /* White buttons on dark theme are trendy */
+  color: var(--bg-color);
+}
+
+.lux-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+}
+
+/* Outline Variant (For secondary actions) */
+.lux-btn-outline {
+  background: transparent;
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+
+.lux-btn-outline:hover {
+  border-color: var(--text-main);
+  background: var(--bg-hover);
+}

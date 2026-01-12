@@ -1,95 +1,217 @@
-/* Global design tokens and themes */
-:root{
-  --bg: #0f1720;
-  --card: #0b1220;
-  --muted: #94a3b8;
-  --text: #e6eef8;
-  --accent: #054a91; /* deep navy */
-  --accent-2: #2b235b; /* deep purple */
-  --glass: rgba(255,255,255,0.04);
+/* src/styles/global.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================
+   1. BASE LAYER (Typography Scalability)
+   ========================================= */
+@layer base {
+  html {
+    @apply text-[16px] antialiased bg-bg text-white;
+  }
+  
+  /* Enterprise Standard: specific heading hierarchies */
+  h1 { 
+    @apply text-4xl md:text-6xl font-bold font-heading mb-4 leading-tight; 
+  }
+  h2 { 
+    @apply text-3xl md:text-4xl font-bold font-heading mb-3; 
+  }
+  h3 { 
+    @apply text-xl md:text-2xl font-bold font-heading mb-2; 
+  }
+  p { 
+    @apply text-base text-muted leading-relaxed mb-4; 
+  }
 }
 
-[data-theme='light']{
-  --bg: #f7fafc;
-  --card: #ffffff;
-  --muted: #6b7280;
-  --text: #0f1720;
-  --accent: #0060DF;
-  --accent-2: #6b21a8;
-  --glass: rgba(15,23,32,0.04);
+/* =========================================
+   2. COMPONENT LAYER (Design System)
+   ========================================= */
+@layer components {
+  /* Centralized Page Layout */
+  .page-content {
+    @apply max-w-7xl mx-auto px-6 py-10 min-h-screen w-full;
+  }
+
+  /* The "UNSPACE" Gradient Title */
+  .lux-title {
+    @apply text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-2;
+    background: linear-gradient(to right, #fff, #a1a1aa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent; 
+  }
+
+  .lux-subtitle {
+    @apply text-lg md:text-xl text-muted max-w-2xl font-light mb-8;
+  }
+
+  /* Glassmorphism Card System */
+  .lux-card {
+    @apply bg-panel border border-border rounded-2xl p-6 backdrop-blur-md transition-all duration-300;
+  }
+  /* FIXED: Replaced crashing opacity syntax with standard CSS shadow */
+  .lux-card:hover {
+    @apply border-primary transform -translate-y-1;
+    /* This creates the purple glow without crashing Tailwind */
+    box-shadow: 0 20px 40px -10px rgba(139, 92, 246, 0.15);
+  }
+
+  /* Unified Inputs (Fixes the "Ugly" forms) */
+  .lux-input, .lux-select {
+    @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none transition-all;
+    font-family: var(--font-body);
+  }
+  .lux-input:focus, .lux-select:focus {
+    @apply border-primary bg-white/10 shadow-[0_0_15px_rgba(139,92,246,0.3)];
+  }
+  
+  /* Interactive Elements */
+  .lux-btn-primary {
+    @apply px-6 py-3 bg-white text-black font-bold rounded-xl hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-lg shadow-white/10 cursor-pointer;
+  }
+  
+  .lux-btn-secondary {
+    @apply px-5 py-2 bg-transparent border border-white/20 text-white font-semibold rounded-xl hover:bg-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer;
+  }
 }
 
-html, body, #root, .App{
-  height: 100%;
-  background: linear-gradient(180deg, var(--bg) 0%, color-mix(in srgb, var(--bg) 80%, black 20%) 100%);
-  color: var(--text);
+/* =========================================
+   3. THEME VARIABLES (Configuration)
+   ========================================= */
+:root {
+  /* Layout Dimensions */
+  --sidebar-width: 260px;
+  --header-height: 70px;
+  
+  /* Z-Index Layers */
+  --z-background: -1;
+  --z-normal: 1;
+  --z-sticky: 100;
+  --z-modal: 1000;
+
+  /* Color Palette - Deep Space Dark Mode */
+  --bg-color: #030305;       
+  --bg-panel: rgba(20, 20, 23, 0.6); 
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  
+  --text-main: #ffffff;
+  --text-muted: #a1a1aa;
+  
+  --border-color: rgba(255, 255, 255, 0.1);
+  
+  /* Accents */
+  --accent-primary: #8b5cf6;   
+  --accent-secondary: #ec4899; 
+  --accent-tertiary: #3b82f6;  
+
+  /* Fonts */
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
 }
 
-/* Typography */
-body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
-h1,h2,h3,h4{ font-family: 'Dela Gothic One', cursive; color:var(--text); margin:0 }
-
-
-/* Utility container */
-.container{
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+/* =========================================
+   4. ANIMATIONS & EFFECTS (PRESERVED)
+   ========================================= */
+.fixed-bg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: var(--z-background);
+  overflow: hidden;
+  background-color: var(--bg-color);
 }
 
-/* Cards */
-.card{
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border: 1px solid rgba(255,255,255,0.03);
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+.shape-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: float 10s infinite ease-in-out;
 }
 
-/* Buttons */
-.btn{
-  display: inline-flex;
+.blob-1 {
+  top: -10%; left: -10%;
+  width: 500px; height: 500px;
+  background: var(--accent-primary);
+  animation-delay: 0s;
+}
+
+.blob-2 {
+  bottom: 20%; right: -10%;
+  width: 400px; height: 400px;
+  background: var(--accent-secondary);
+  animation-delay: 2s;
+}
+
+.blob-3 {
+  top: 40%; left: 30%;
+  width: 300px; height: 300px;
+  background: var(--accent-tertiary);
+  animation-delay: 4s;
+  opacity: 0.2;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, 50px); }
+}
+
+/* =========================================
+   5. LIGHTBOX STYLES (PRESERVED)
+   ========================================= */
+.lightbox-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: none;
-  background: var(--accent);
-  color: white;
+}
+
+.lightbox-inner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.lightbox-image {
+  max-height: 80vh;
+  max-width: 80vw;
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 50px rgba(0,0,0,0.5);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 20px; right: 30px;
+  background: none; border: none;
+  color: white; font-size: 3rem;
   cursor: pointer;
-  transition: transform 150ms ease, box-shadow 150ms ease;
 }
 
-.btn.secondary{
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.06);
-  color: var(--text);
+.lightbox-nav {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid var(--border-color);
+  color: white;
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
 }
-
-.btn:hover{transform: translateY(-2px); box-shadow: 0 8px 22px rgba(2,6,23,0.6);} 
-
-/* Responsive utilities */
-.row{display:flex; gap:16px; align-items:stretch;}
-.col{flex:1}
-
-@media (max-width: 768px){
-  .row{flex-direction:column}
+.lightbox-nav:hover:not(:disabled) {
+  background: var(--accent-primary);
 }
-
-/* Small form elements */
-.input, textarea{
-  width:100%;
-  padding:10px 12px;
-  border-radius:8px;
-  border:1px solid rgba(255,255,255,0.04);
-  background:transparent;
-  color:var(--text);
+.lightbox-nav:disabled {
+  opacity: 0.3; cursor: not-allowed;
 }
-
-/* Small helpers */
-.kicker{font-size:0.85rem; color:var(--muted);}
-.h1{font-size:1.6rem; font-weight:700}
-.h2{font-size:1.2rem; font-weight:600}
-
-/* Focus styles for accessibility */
-:focus{outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent 60%); outline-offset: 2px}
