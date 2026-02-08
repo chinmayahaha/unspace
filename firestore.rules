@@ -1,49 +1,56 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // 1. Helper Function: Is user signed in?
+
+    // --- HELPER FUNCTIONS ---
     function isSignedIn() {
       return request.auth != null;
     }
     
-    // 2. Helper: Is user the owner of this data?
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    // --- COLLECTIONS ---
+    // Check if the data coming in has valid fields
+    function isValidListing() {
+      let incoming = request.resource.data;
+      return incoming.keys().hasAll(['title', 'price', 'userId', 'createdAt']) 
+             && incoming.price is number
+             && incoming.price >= 0
+             && incoming.title is string
+             && incoming.title.size() > 0
+             && incoming.userId == request.auth.uid; // Must match logged-in user
+    }
 
-    // Users: Public profile read, Owner write
+    // --- RULES ---
+
+    // 1. USERS: Strict Profile Security
     match /users/{userId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn(); // Or restrict to isOwner(userId) for privacy
       allow write: if isOwner(userId);
     }
 
-    // Notifications: CRITICAL PRIVACY
-    // Only the person receiving the notification can read it
-    match /notifications/{notificationId} {
-      allow read: if isSignedIn() && resource.data.toUserId == request.auth.uid;
-      allow create: if isSignedIn(); // Backend functions handle creation mostly, but allow app to create if needed
+    // 2. LISTINGS: Public Read, strict Write
+    match /listings/{listingId} {
+      allow read: if true;
+      
+      // Create: Must be signed in AND data must be valid
+      allow create: if isSignedIn() && isValidListing();
+      
+      // Update: Must be Owner AND cannot change ownership (userId)
+      allow update: if isOwner(resource.data.userId) 
+                    && request.resource.data.userId == resource.data.userId // ID unchanged
+                    && isValidListing(); 
+                    
+      allow delete: if isOwner(resource.data.userId);
     }
 
-    // Listings, Books, Ads, Posts: Public Read, Auth Write
-    match /listings/{docId} { allow read: if true; allow write: if isSignedIn(); }
-    match /books/{docId} { allow read: if true; allow write: if isSignedIn(); }
-    match /serviceRequests/{docId} { allow read: if true; allow write: if isSignedIn(); }
-    match /posts/{docId} { allow read: if true; allow write: if isSignedIn(); }
-    
-    // Subcollections (Like Comments/Likes on posts)
-    match /posts/{postId}/comments/{commentId} { allow read: if true; allow write: if isSignedIn(); }
-    match /posts/{postId}/likes/{userId} { allow read: if true; allow write: if isSignedIn(); }
-
-    // Exchange Requests: Only involved parties can read
-    match /exchangeRequests/{requestId} {
-      allow read: if isSignedIn() && (
-        resource.data.requesterId == request.auth.uid || 
-        resource.data.targetOwnerId == request.auth.uid
-      );
-      allow write: if isSignedIn();
+    // 3. NOTIFICATIONS: High Privacy
+    match /notifications/{notifId} {
+      // Only the recipient can read
+      allow read: if isSignedIn() && resource.data.toUserId == request.auth.uid;
+      // Only the sender can create (and must mark themselves as sender)
+      allow create: if isSignedIn() && request.resource.data.fromUserId == request.auth.uid;
     }
   }
 }

@@ -1,7 +1,6 @@
 /* src/pages/ContactPage.js */
 import React, { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { ICONS } from '../config/icons'; // Ensure you have icons like ENVELOPE, BUG, USER_SLASH imported
+ // Ensure you have icons like ENVELOPE, BUG, USER_SLASH imported
 
 const ContactPage = () => {
   const [topic, setTopic] = useState('general');

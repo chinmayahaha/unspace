@@ -1,72 +1,178 @@
 /* src/components/layout/Layout.css */
 
-.app_layout {
-  display: flex;
-  min-height: 100vh;
-  position: relative;
-  isolation: isolate;
+/* =========================================
+   1. DESKTOP STYLES (Default)
+   ========================================= */
+
+/* HIDE the toggle button on desktop (Sidebar is always open) */
+.mobile_toggle_btn {
+  display: none; 
 }
 
+/* Sidebar: Fixed to the left, always visible on Desktop */
 .sidebar {
-  width: var(--sidebar-width);
-  height: 100vh;
   position: fixed;
-  left: 0;
   top: 0;
-  background: var(--bg-panel);
-  border-right: 1px solid var(--border-color);
-  backdrop-filter: blur(20px);
-  padding: 2rem;
-  z-index: var(--z-sticky); /* Used global variable */
+  left: 0;
+  height: 100vh;
+  width: 260px;
+  background: #050505;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 100; /* Lower than modal overlays */
+  
+  /* DEFAULT: VISIBLE ON DESKTOP */
+  transform: translateX(0); 
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   display: flex;
   flex-direction: column;
 }
 
+.sidebar_content {
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Main Content: Pushed to the right so it doesn't hide behind sidebar */
+.main_content {
+  width: 100%;
+  min-height: 100vh;
+  /* MARGIN LEFT = SIDEBAR WIDTH */
+  margin-left: 260px; 
+  /* Calc ensures it fills remaining width correctly */
+  width: calc(100% - 260px); 
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+/* Overlay is NOT needed on desktop */
+.sidebar_overlay {
+  display: none;
+}
+
+/* --- SHARED STYLES (Logo, Links) --- */
 .logo_area {
-  margin-bottom: 3rem;
-  font-family: var(--font-heading);
+  font-family: 'Montserrat', sans-serif;
   font-size: 1.5rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--text-main);
+  color: white;
   text-decoration: none;
+  margin-bottom: 40px;
+  padding-left: 10px;
   display: block;
 }
 
-.logo_dot {
-    color: var(--accent-primary);
-}
+.logo_dot { color: #7c3aed; }
 
-.main_content {
-  /* Critical Logic: Matches global sidebar width */
-  margin-left: var(--sidebar-width);
-  flex: 1;
-  padding: 3rem;
-  position: relative;
-  z-index: var(--z-normal);
-  max-width: 100%;
+.nav_menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .nav_link {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: var(--radius-md);
-  color: var(--text-muted);
-  text-decoration: none; /* Removed link underline */
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-bottom: 4px;
+  padding: 12px 16px;
+  color: #888;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.nav_icon {
+  margin-right: 12px;
+  font-size: 1.1rem;
+  width: 24px;
+  text-align: center;
 }
 
 .nav_link:hover {
-  background: var(--bg-hover);
-  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
 }
 
 .nav_link_active {
-  background: var(--bg-hover);
-  color: var(--text-main);
-  font-weight: 600;
-  border-left: 3px solid var(--accent-primary); /* Visual Cue */
+  background: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+}
+
+.nav_badge {
+  margin-left: auto;
+  background: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+
+/* =========================================
+   2. MOBILE STYLES (Max-Width: 768px)
+   ========================================= */
+
+@media (max-width: 768px) {
+  
+  /* SHOW the toggle button */
+  .mobile_toggle_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 2000;
+    width: 40px;
+    height: 40px;
+    background: #111;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+  }
+
+  /* Sidebar: HIDDEN by default on mobile */
+  .sidebar {
+    transform: translateX(-100%);
+    z-index: 1500; /* Higher than content */
+    box-shadow: none;
+  }
+
+  /* OPEN STATE (Applied via JS class) */
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+  }
+
+  /* Main Content: Full width on mobile */
+  .main_content {
+    margin-left: 0;
+    width: 100%;
+    padding: 80px 20px 20px 20px; /* Top padding for toggle button */
+  }
+
+  /* Sidebar Content: Add top padding so logo clears toggle button */
+  .sidebar_content {
+    padding-top: 70px; 
+  }
+
+  /* Overlay: Visible only when menu is open */
+  .sidebar_overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(3px);
+    z-index: 1400;
+    animation: fadeIn 0.2s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

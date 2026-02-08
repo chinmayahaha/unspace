@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { ICONS } from '../../../config/icons';
 import LuxuryBackground from '../../../components/UI/LuxuryBackground';
 import './SignIn.css';
 

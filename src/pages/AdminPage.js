@@ -2,8 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { functions } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { ICONS } from '../config/icons'; // Ensure you have USER, TRASH, BAN, etc.
 
 const AdminPage = () => {
   const [stats, setStats] = useState(null);

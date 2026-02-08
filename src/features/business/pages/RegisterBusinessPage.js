@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { httpsCallable } from 'firebase/functions';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 // FIX: Pointing to the lib folder from 4 levels deep
 import { functions } from '../../../firebase'; 
-import { ICONS } from '../../../config/icons';
+
 import './RegisterBusinessPage.css';
 
 const RegisterBusinessPage = () => {
@@ -23,13 +23,13 @@ const RegisterBusinessPage = () => {
   const [logoFile, setLogoFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+// eslint-disable-next-line 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     // ... (Your existing input logic here) ...
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-
+// eslint-disable-next-line 
   const handleFileChange = (e) => {
     if (e.target.files[0]) setLogoFile(e.target.files[0]);
   };

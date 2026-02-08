@@ -64,11 +64,6 @@ const Navigation = () => {
                     <FontAwesomeIcon icon={ICONS.USER} /> Dashboard
                   </Link>
                 </li>
-                {isAdmin && (
-                  <li>
-                    <Link to="/admin" className="nav-link">Admin</Link>
-                  </li>
-                )}
                 <li>
                   <button onClick={handleSignOut} className="nav-link nav-signout">
                     Sign Out
