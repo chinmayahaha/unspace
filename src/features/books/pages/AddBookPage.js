@@ -5,6 +5,8 @@ import { useAuth } from '../../auth/context/AuthContext';
 import { functions } from '../../../firebase';
 import { httpsCallable } from 'firebase/functions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage, auth } from '../../../firebase';
 import { ICONS } from '../../../config/icons';
 
 const AddBookPage = () => {
@@ -32,58 +34,68 @@ const AddBookPage = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setFormData(prev => ({
-          ...prev,
-          imageFile: {
-            name: file.name,
-            type: file.type,
-            buffer: reader.result.split(',')[1] // Extract Base64
-          }
-        }));
+// 1. Store the RAW file, not base64
+const handleImageChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    setFormData(prev => ({
+      ...prev,
+      imageFile: file, // Store raw file object
+      previewUrl: URL.createObjectURL(file) // Local preview only
+    }));
+  }
+};
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!formData.title || !formData.author) {
+    setError('Title and Author are required.');
+    return;
+  }
+
+  setLoading(true);
+  setError(null);
+
+  try {
+    let imageUrl = "";
+
+    // 2. Upload to Storage FIRST
+    if (formData.imageFile) {
+      const file = formData.imageFile;
+      // Unique path
+      const storageRef = ref(storage, `books/${Date.now()}_${file.name}`);
+      
+      // Security Metadata
+      const metadata = {
+          contentType: file.type,
+          customMetadata: { userId: auth.currentUser.uid }
       };
-      reader.readAsDataURL(file);
-    }
-  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!formData.title || !formData.author) {
-      setError('Title and Author are required.');
-      window.scrollTo(0,0);
-      return;
+      await uploadBytes(storageRef, file, metadata);
+      imageUrl = await getDownloadURL(storageRef);
     }
 
-    try {
-      setLoading(true);
-      setError(null);
+    // 3. Send ONLY the URL to the function
+    const addBookForExchange = httpsCallable(functions, 'addBookForExchange');
+    const result = await addBookForExchange({
+      ...formData,
+      price: formData.price ? parseFloat(formData.price) : 0,
+      imageUrl: imageUrl, // Send URL string
+      imageFile: null     // Remove raw file from payload
+    });
 
-      const addBookForExchange = httpsCallable(functions, 'addBookForExchange');
-      const result = await addBookForExchange({
-        ...formData,
-        price: formData.price ? parseFloat(formData.price) : 0,
-        imageUrl: formData.imageFile ? `data:${formData.imageFile.type};base64,${formData.imageFile.buffer}` : ''
-      });
-
-      if (result.data.success || result.data.bookId) {
-        navigate('/book-exchange');
-      } else {
-        setError('Failed to add book. Please try again.');
-      }
-    } catch (err) {
-      console.error('Error adding book:', err);
-      setError(err.message || 'Failed to add book');
-      window.scrollTo(0,0);
-    } finally {
-      setLoading(false);
+    if (result.data.success || result.data.bookId) {
+      navigate('/book-exchange');
+    } else {
+      throw new Error('Failed to add book.');
     }
-  };
-
+  } catch (err) {
+    console.error(err);
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
   // Reusable Input Style
   const inputClass = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary focus:outline-none transition-colors placeholder-gray-500";
   const labelClass = "block text-xs font-bold text-muted mb-2 uppercase tracking-wide";

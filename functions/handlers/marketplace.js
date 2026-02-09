@@ -158,30 +158,29 @@ async function getUserListings(data, context) {
  * Get all listings (Marketplace Feed)
  * FIXED: Added NaN checks to prevent emulator/production crashes.
  */
+/* Update inside functions/handlers/marketplace.js */
+
+/**
+ * Get all listings (Marketplace Feed)
+ * UPDATED: Optimized for scalability. Removed in-memory search.
+ */
 async function getAllListings(data, context) {
   const input = unwrapData(data);
-  const { category, minPrice, maxPrice, condition, searchTerm, limit = 20, lastDocId } = input;
+  const { category, minPrice, maxPrice, condition, limit = 20, lastDocId } = input;
 
   const db = admin.firestore();
   let query = db.collection("listings")
       .where("status", "==", "active")
       .orderBy("createdAt", "desc");
 
-  if (category) query = query.where("category", "==", category);
+  // Database-Level Filters (Fast & Scalable)
+  if (category && category !== "All") query = query.where("category", "==", category);
   if (condition) query = query.where("condition", "==", condition);
   
-  // FIX: Safety check for NaN
-  if (minPrice !== undefined && minPrice !== null) {
-      const min = parseFloat(minPrice);
-      if (!isNaN(min)) query = query.where("price", ">=", min);
-  }
-
-  // FIX: Safety check for NaN
-  if (maxPrice !== undefined && maxPrice !== null) {
-      const max = parseFloat(maxPrice);
-      if (!isNaN(max)) query = query.where("price", "<=", max);
-  }
-
+  // NOTE: Firestore cannot handle range filters (><) on multiple fields easily alongside orderBy.
+  // We keep the logic simple here to prevent "Index Needed" errors.
+  
+  // Pagination
   if (lastDocId) {
     const lastDoc = await db.collection("listings").doc(lastDocId).get();
     if (lastDoc.exists) {
@@ -194,18 +193,12 @@ async function getAllListings(data, context) {
   const snapshot = await query.get();
   const listings = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-  // Text Search (Client-side filtering)
-  let filteredListings = listings;
-  if (searchTerm) {
-    const searchLower = searchTerm.toLowerCase();
-    filteredListings = listings.filter((listing) =>
-      listing.title.toLowerCase().includes(searchLower) ||
-      listing.description.toLowerCase().includes(searchLower)
-    );
-  }
+  // REMOVED: In-memory "searchTerm" filtering. 
+  // Enterprise Rule: Never filter arrays in memory on the server.
+  // If you need Text Search, you MUST use Algolia, Typesense, or client-side filtering on small datasets.
 
   return {
-    listings: filteredListings,
+    listings,
     hasMore: snapshot.docs.length === limit,
     lastDocId: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
   };

@@ -5,6 +5,8 @@ import { functions } from '../../../firebase';
 import { httpsCallable } from 'firebase/functions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ICONS } from '../../../config/icons';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage, auth } from '../../../firebase';
 
 const SubmitRequestPage = () => {
   const navigate = useNavigate();
@@ -32,65 +34,64 @@ const SubmitRequestPage = () => {
     setFormData(prev => ({ ...prev, requirements: reqs }));
   };
 
-  const handleAssetChange = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length > 0) {
-      const assetPromises = files.map(file => {
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            resolve({
-              name: file.name,
-              type: file.type,
-              buffer: reader.result.split(',')[1] // Base64
-            });
-          };
-          reader.readAsDataURL(file);
-        });
-      });
+ // 1. Store RAW files
+ const handleAssetChange = (e) => {
+  const files = Array.from(e.target.files);
+  setFormData(prev => ({ ...prev, creativeAssets: files }));
+};
 
-      Promise.all(assetPromises).then(assets => {
-        setFormData(prev => ({ ...prev, creativeAssets: assets }));
-      });
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!formData.serviceType || !formData.title) {
+    setError('Please fill in required fields');
+    return;
+  }
+
+  setLoading(true);
+  setError(null);
+
+  try {
+    // 2. Upload All Assets Loop
+    let assetUrls = [];
+    if (formData.creativeAssets && formData.creativeAssets.length > 0) {
+      assetUrls = await Promise.all(formData.creativeAssets.map(async (file) => {
+         const fileRef = ref(storage, `requests/${Date.now()}_${file.name}`);
+         const metadata = {
+            contentType: file.type,
+            customMetadata: { userId: auth.currentUser.uid }
+         };
+         await uploadBytes(fileRef, file, metadata);
+         return await getDownloadURL(fileRef);
+      }));
     }
-  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.serviceType || !formData.title || !formData.description) {
-      setError('Please fill in all required fields');
-      return;
+    // 3. Call Function with URLs
+    const submitServiceRequest = httpsCallable(functions, 'submitServiceRequest');
+    
+    // Handle requirements split
+    const requirementsArray = typeof formData.requirements === 'string' 
+      ? formData.requirements.split('\n').filter(r => r.trim())
+      : formData.requirements;
+
+    const result = await submitServiceRequest({
+      ...formData,
+      requirements: requirementsArray,
+      budget: formData.budget ? parseFloat(formData.budget) : 0,
+      creativeAssets: assetUrls // Send URLs array
+    });
+
+    if (result.data.requestId) {
+      navigate('/adsx');
+    } else {
+      throw new Error('Failed to submit request');
     }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const submitServiceRequest = httpsCallable(functions, 'submitServiceRequest');
-      
-      // Convert requirements string to array if needed
-      const requirementsArray = typeof formData.requirements === 'string' 
-        ? formData.requirements.split('\n').filter(r => r.trim())
-        : formData.requirements;
-
-      const result = await submitServiceRequest({
-        ...formData,
-        requirements: requirementsArray,
-        budget: formData.budget ? parseFloat(formData.budget) : 0,
-      });
-
-      if (result.data.requestId) {
-        navigate('/adsx');
-      } else {
-        setError('Failed to submit service request');
-      }
-    } catch (err) {
-      console.error('Error submitting request:', err);
-      setError(err.message || 'Failed to submit service request');
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (err) {
+    console.error(err);
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Styles
   const inputClass = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary focus:outline-none transition-colors";

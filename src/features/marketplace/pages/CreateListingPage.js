@@ -1,11 +1,12 @@
+/* src/features/marketplace/pages/CreateListingPage.js */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { functions, storage, firebaseConfigured } from '../../../firebase';
+// FIX: Added 'auth' to the import list
+import { functions, storage, firebaseConfigured, auth } from '../../../firebase';
 import { httpsCallable } from 'firebase/functions';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ICONS } from '../../../config/icons';
-// NO UUID IMPORT HERE
 
 const CreateListingPage = () => {
   const navigate = useNavigate();
@@ -56,11 +57,19 @@ const CreateListingPage = () => {
         // A. Upload Images (Using Date.now() instead of uuid)
         const imageUrls = await Promise.all(
             imageFiles.map(async (file) => {
-                // GENERATE SIMPLE UNIQUE NAME
                 const uniqueName = `${Date.now()}_${Math.floor(Math.random() * 9999)}_${file.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
                 const fileRef = ref(storage, `listings/${uniqueName}`);
                 
-                await uploadBytes(fileRef, file);
+                // NEW: Metadata required by security rules
+                const metadata = {
+                    contentType: file.type,
+                    customMetadata: {
+                        // FIX: Now 'auth' is defined, so this line works
+                        userId: auth.currentUser ? auth.currentUser.uid : 'anonymous'
+                    }
+                };
+                
+                await uploadBytes(fileRef, file, metadata); 
                 return await getDownloadURL(fileRef);
             })
         );

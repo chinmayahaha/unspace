@@ -48,11 +48,24 @@ const AdminPage = () => {
     } catch (e) { alert(e.message); }
   };
 
-  const handleGrantSelf = async () => {
-    const func = httpsCallable(functions, 'makeMeAdmin');
-    await func();
-    alert("You are now Admin. Refreshing...");
-    loadDashboard();
+// UPDATED: Now prompts for the Secret Key
+const handleGrantSelf = async () => {
+    const secret = window.prompt("Enter Deployment Secret Key:");
+    if (!secret) return;
+
+    try {
+        const func = httpsCallable(functions, 'makeMeAdmin');
+        // Pass the secret key to the backend
+        const result = await func({ secretKey: secret }); 
+        
+        alert(result.data.message);
+        
+        // Reload to check if permissions updated
+        loadDashboard(); 
+    } catch (error) {
+        console.error(error);
+        alert("Failed: " + error.message);
+    }
   };
 
   if (loading) return <div className="text-white p-10 text-center animate-pulse">Loading Mission Control...</div>;
