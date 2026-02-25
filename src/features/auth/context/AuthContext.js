@@ -26,14 +26,12 @@ export const AuthProvider = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // 1. Safety Check: If config is missing, stop to prevent crash
     if (!firebaseConfigured || !auth) {
-      console.warn('⚠️ Firebase not configured. Auth listeners disabled.');
+      console.warn('Firebase not configured. Auth listeners disabled.');
       setLoading(false);
       return;
     }
 
-    // 2. Listener: Single source of truth (no localStorage needed)
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser({
@@ -44,14 +42,14 @@ export const AuthProvider = ({ children }) => {
           provider: firebaseUser.providerData[0]?.providerId || 'email',
         });
 
-        // 3. Admin Check (UI Only)
-        // WARNING: Real security must be in Firestore Rules (firestore.rules)
+        // FIX: Check admin status via custom token claim (set by makeMeAdmin function)
+        // This avoids a direct Firestore read that fails due to missing security rules
         try {
-          const adminDocRef = doc(db, 'admins', firebaseUser.uid);
-          const adminSnap = await getDoc(adminDocRef);
-          setIsAdmin(adminSnap.exists());
+          // Force-refresh to get the latest custom claims
+          const idTokenResult = await firebaseUser.getIdTokenResult(true);
+          setIsAdmin(idTokenResult.claims.admin === true);
         } catch (err) {
-          console.error('Failed to check admin status:', err);
+          // Silently fail — user is simply not an admin
           setIsAdmin(false);
         }
       } else {
@@ -102,7 +100,6 @@ export const AuthProvider = ({ children }) => {
     }
     try {
       await firebaseSignOut(auth);
-      // State updates automatically via listener
     } catch (error) {
       console.error('Sign out error:', error);
     }
@@ -120,8 +117,10 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {/* FIX: Don't render children until auth state is resolved.
+          This prevents ALL child components from firing requests before
+          auth is ready, eliminating 401 errors on page load. */}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
-

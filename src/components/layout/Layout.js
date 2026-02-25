@@ -2,55 +2,73 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db, auth } from '../../firebase'; 
+import { db } from '../../firebase';
+import { useAuth } from '../../features/auth/context/AuthContext';
 import LuxuryBackground from '../UI/LuxuryBackground';
 import './Layout.css';
 
-// Admin is intentionally excluded here
 const NAV_ITEMS = [
-  { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { path: '/marketplace', label: 'Marketplace', icon: '🛍️' },
-  { path: '/book-exchange', label: 'BookX', icon: '📚' },
-  { path: '/community', label: 'Community', icon: '🤝' },
-  { path: '/adsx', label: 'AdsX', icon: '📢' },
-  { path: '/terms', label: 'Terms', icon: '📜' },
-  { path: '/contact', label: 'Contact', icon: '📞' },
+  { path: '/dashboard',     label: 'Dashboard',    icon: '📊' },
+  { path: '/marketplace',   label: 'Marketplace',  icon: '🛍️' },
+  { path: '/book-exchange', label: 'BookX',        icon: '📚' },
+  { path: '/lostfound',     label: 'Lost & Found', icon: '🔍' },
+  { path: '/adsx',          label: 'AdsX',         icon: '📢' },
+  { path: '/messages',      label: 'Messages',     icon: '💬', showBadge: true },
+  { path: '/terms',         label: 'Terms',        icon: '📜' },
+  { path: '/contact',       label: 'Contact',      icon: '📞' },
 ];
 
 const Layout = ({ children }) => {
   const location = useLocation();
+  const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isLinkActive = (path) => location.pathname.startsWith(path);
 
-  // RED DOT LISTENER
+  // Count unread conversations
   useEffect(() => {
-    let userId = auth.currentUser?.uid;
-    if (!userId && window.location.hostname === 'localhost') {
-        userId = "emulator-test-user-123";
+    if (!user?.id) {
+      setUnreadCount(0);
+      return;
     }
-    if (!userId) return;
 
+    // Query conversations where user is a participant and has unread messages
     const q = query(
-      collection(db, "notifications"),
-      where("toUserId", "==", userId),
-      where("read", "==", false)
+      collection(db, "conversations"),
+      where("participants", "array-contains", user.id)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setUnreadCount(snapshot.docs.length);
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      // For each conversation, check if there are unread messages
+      // This is a simplified version - in production you'd store unread count in conversation doc
+      let totalUnread = 0;
+      
+      for (const convDoc of snapshot.docs) {
+        const conv = convDoc.data();
+        // Check if last message was from someone else
+        const participants = conv.participants || [];
+        const lastMessageSender = conv.lastMessageSenderId; // Would need to add this field
+        if (lastMessageSender && lastMessageSender !== user.id) {
+          totalUnread++;
+        }
+      }
+      
+      setUnreadCount(totalUnread);
+    }, (error) => {
+      console.error("Failed to fetch unread count:", error);
+      setUnreadCount(0);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   return (
     <div className="app_layout">
-      <LuxuryBackground /> 
+      <LuxuryBackground />
 
-      {/* 1. TOGGLE BUTTON (Styled in CSS now) */}
-      <button 
+      {/* Mobile Toggle Button */}
+      <button
         className="mobile_toggle_btn"
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         aria-label="Toggle Menu"
@@ -58,45 +76,43 @@ const Layout = ({ children }) => {
         {mobileMenuOpen ? '✕' : '☰'}
       </button>
 
-      {/* 2. OVERLAY (Closes sidebar when clicked) */}
+      {/* Overlay */}
       {mobileMenuOpen && (
-        <div 
-            className="sidebar_overlay"
-            onClick={() => setMobileMenuOpen(false)}
+        <div
+          className="sidebar_overlay"
+          onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      {/* 3. SIDEBAR */}
+      {/* Sidebar */}
       <aside className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar_content">
-            <Link to="/" className="logo_area" onClick={() => setMobileMenuOpen(false)}>
+          <Link to="/" className="logo_area" onClick={() => setMobileMenuOpen(false)}>
             UNSPACE<span className="logo_dot">.</span>
-            </Link>
+          </Link>
 
-            <nav className="nav_menu">
+          <nav className="nav_menu">
             {NAV_ITEMS.map((item) => (
-                <Link
+              <Link
                 key={item.path}
                 to={item.path}
                 className={`nav_link ${isLinkActive(item.path) ? 'nav_link_active' : ''}`}
                 onClick={() => setMobileMenuOpen(false)}
-                >
+              >
                 <span className="nav_icon">{item.icon}</span>
                 {item.label}
 
-                {/* Red Dot Badge */}
-                {item.path === '/dashboard' && unreadCount > 0 && (
-                    <span className="nav_badge">
-                        {unreadCount}
-                    </span>
+                {/* Unread badge for Messages */}
+                {item.showBadge && unreadCount > 0 && (
+                  <span className="nav_badge">{unreadCount}</span>
                 )}
-                </Link>
+              </Link>
             ))}
-            </nav>
+          </nav>
         </div>
       </aside>
 
-      {/* 4. MAIN CONTENT */}
+      {/* Main Content */}
       <main className="main_content">
         {children}
       </main>

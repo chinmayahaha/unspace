@@ -1,17 +1,38 @@
 /* src/pages/ContactPage.js */
 import React, { useState } from 'react';
+import { db } from '../firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import { useAuth } from '../features/auth/context/AuthContext';
  // Ensure you have icons like ENVELOPE, BUG, USER_SLASH imported
 
 const ContactPage = () => {
   const [topic, setTopic] = useState('general');
   const [submitted, setSubmitted] = useState(false);
+  const { user } = useAuth();
+const [formState, setFormState] = useState({ name: '', email: user?.email || '', reportedUrl: '', message: '' });
+const [sending, setSending] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // In a real app, this would send an email or save to Firestore 'tickets' collection
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setSending(true);
+  try {
+    await addDoc(collection(db, 'contactMessages'), {
+      topic,
+      name: formState.name,
+      email: formState.email,
+      reportedUrl: formState.reportedUrl || null,
+      message: formState.message,
+      userId: user?.id || null,
+      createdAt: new Date(),
+      read: false,
+    });
     setSubmitted(true);
-  };
-
+  } catch (err) {
+    alert('Failed to send: ' + err.message);
+  } finally {
+    setSending(false);
+  }
+};
   if (submitted) {
     return (
       <div className="min-h-screen flex items-center justify-center pr-6 pb-20">
@@ -27,89 +48,118 @@ const ContactPage = () => {
 
   return (
     <div className="min-h-screen w-full pr-6 text-white pb-20">
-      
       {/* HEADER */}
       <div className="mb-10">
-        <h1 className="lux-title text-4xl">Contact Support</h1>
-        <p className="lux-subtitle">We are here to help. What's on your mind?</p>
+        <><h1 className="lux-title text-4xl">Contact Support</h1><p className="lux-subtitle">We are here to help. What's on your mind?</p></>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        
-        {/* LEFT: OPTIONS */}
-        <div className="space-y-4">
-            <button 
-                onClick={() => setTopic('general')}
-                className={`w-full p-4 rounded-xl border text-left transition-all ${topic === 'general' ? 'bg-primary/20 border-primary text-white' : 'bg-white/5 border-white/10 text-muted hover:bg-white/10'}`}
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* LEFT: OPTIONS */}
+          <div className="space-y-4">
+            <button
+              type="button"
+              onClick={() => setTopic('general')}
+              className={`w-full p-4 rounded-xl border text-left transition-all ${topic === 'general' ? 'bg-primary/20 border-primary text-white' : 'bg-white/5 border-white/10 text-muted hover:bg-white/10'}`}
             >
-                <h3 className="font-bold mb-1">General Help</h3>
-                <p className="text-xs opacity-70">Questions about how the app works.</p>
+              <h3 className="font-bold mb-1">General Help</h3>
+              <p className="text-xs opacity-70">Questions about how the app works.</p>
             </button>
 
-            <button 
-                onClick={() => setTopic('bug')}
-                className={`w-full p-4 rounded-xl border text-left transition-all ${topic === 'bug' ? 'bg-primary/20 border-primary text-white' : 'bg-white/5 border-white/10 text-muted hover:bg-white/10'}`}
+            <button
+              type="button"
+              onClick={() => setTopic('bug')}
+              className={`w-full p-4 rounded-xl border text-left transition-all ${topic === 'bug' ? 'bg-primary/20 border-primary text-white' : 'bg-white/5 border-white/10 text-muted hover:bg-white/10'}`}
             >
-                <h3 className="font-bold mb-1">Report a Bug</h3>
-                <p className="text-xs opacity-70">Something is broken or crashing.</p>
+              <h3 className="font-bold mb-1">Report a Bug</h3>
+              <p className="text-xs opacity-70">Something is broken or crashing.</p>
             </button>
 
-            <button 
-                onClick={() => setTopic('report_user')}
-                className={`w-full p-4 rounded-xl border text-left transition-all ${topic === 'report_user' ? 'bg-red-500/20 border-red-500 text-red-200' : 'bg-white/5 border-white/10 text-muted hover:bg-white/10'}`}
+            <button
+              type="button"
+              onClick={() => setTopic('report_user')}
+              className={`w-full p-4 rounded-xl border text-left transition-all ${topic === 'report_user' ? 'bg-red-500/20 border-red-500 text-red-200' : 'bg-white/5 border-white/10 text-muted hover:bg-white/10'}`}
             >
-                <h3 className="font-bold mb-1">Report a User/Scam</h3>
-                <p className="text-xs opacity-70">Safety concern or suspicious activity.</p>
+              <h3 className="font-bold mb-1">Report a User/Scam</h3>
+              <p className="text-xs opacity-70">Safety concern or suspicious activity.</p>
             </button>
-        </div>
+          </div>
 
-        {/* RIGHT: FORM */}
-        <div className="md:col-span-2">
+          {/* RIGHT: FORM */}
+          <div className="md:col-span-2">
             <div className="lux-card p-8">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    
-                    {topic === 'report_user' && (
-                        <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-lg text-red-200 text-sm mb-6">
-                            <span className="font-bold">Safety First:</span> If you are in immediate danger, please contact campus security or local authorities directly.
-                        </div>
-                    )}
+              <div className="space-y-6">
+                {topic === 'report_user' && (
+                  <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-lg text-red-200 text-sm mb-6">
+                    <span className="font-bold">Safety First:</span> If you are in immediate danger, please contact campus security or local authorities directly.
+                  </div>
+                )}
 
-                    <div>
-                        <label className="block text-xs font-bold text-muted mb-2 uppercase">Your Name</label>
-                        <input type="text" className="lux-input w-full" placeholder="John Doe" required />
-                    </div>
+                <div>
+                  <label className="block text-xs font-bold text-muted mb-2 uppercase">Your Name</label>
+                  <input
+                    type="text"
+                    className="lux-input w-full"
+                    placeholder="John Doe"
+                    required
+                    value={formState.name}
+                    onChange={e => setFormState(p => ({ ...p, name: e.target.value }))}
+                  />
+                </div>
 
-                    <div>
-                        <label className="block text-xs font-bold text-muted mb-2 uppercase">Your Email</label>
-                        <input type="email" className="lux-input w-full" placeholder="john@university.edu" required />
-                    </div>
+                <div>
+                  <label className="block text-xs font-bold text-muted mb-2 uppercase">Your Email</label>
+                  <input
+                    type="email"
+                    className="lux-input w-full"
+                    placeholder="john@university.edu"
+                    required
+                    value={formState.email}
+                    onChange={e => setFormState(p => ({ ...p, email: e.target.value }))}
+                  />
+                </div>
 
-                    {topic === 'report_user' && (
-                        <div>
-                            <label className="block text-xs font-bold text-red-400 mb-2 uppercase">Offending User / Item URL</label>
-                            <input type="text" className="lux-input w-full border-red-900 focus:border-red-500" placeholder="Paste link to profile or item..." />
-                        </div>
-                    )}
+                {topic === 'report_user' && (
+                  <div>
+                    <label className="block text-xs font-bold text-red-400 mb-2 uppercase">Offending User / Item URL</label>
+                    <input
+                      type="text"
+                      className="lux-input w-full border-red-900 focus:border-red-500"
+                      placeholder="Paste link to profile or item..."
+                      value={formState.reportedUrl}
+                      onChange={e => setFormState(p => ({ ...p, reportedUrl: e.target.value }))}
+                    />
+                  </div>
+                )}
 
-                    <div>
-                        <label className="block text-xs font-bold text-muted mb-2 uppercase">Message</label>
-                        <textarea 
-                            className="lux-input w-full" 
-                            rows="6" 
-                            placeholder={topic === 'bug' ? "Describe steps to reproduce the error..." : "How can we help?"}
-                            required
-                        ></textarea>
-                    </div>
+                <div>
+                  <label className="block text-xs font-bold text-muted mb-2 uppercase">Message</label>
+                  <textarea
+                    className="lux-input w-full"
+                    rows="6"
+                    required
+                    placeholder={topic === 'bug' ? 'Describe steps to reproduce the error...' : 'How can we help?'}
+                    value={formState.message}
+                    onChange={e => setFormState(p => ({ ...p, message: e.target.value }))}
+                  ></textarea>
+                </div>
 
-                    <button type="submit" className={`w-full py-3 rounded-xl font-bold transition-colors ${topic === 'report_user' ? 'bg-red-600 hover:bg-red-500 text-white' : 'lux-btn-primary'}`}>
-                        {topic === 'report_user' ? 'Submit Report' : 'Send Message'}
-                    </button>
-
-                </form>
+                <button
+                  type="submit"
+                  className={`w-full py-3 rounded-xl font-bold transition-colors ${topic === 'report_user' ? 'bg-red-600 hover:bg-red-500 text-white' : 'lux-btn-primary'}`}
+                  disabled={sending}
+                >
+                  {sending
+                    ? 'Sending...'
+                    : topic === 'report_user'
+                    ? 'Submit Report'
+                    : 'Send Message'}
+                </button>
+              </div>
             </div>
+          </div>
         </div>
-
-      </div>
+      </form>
     </div>
   );
 };

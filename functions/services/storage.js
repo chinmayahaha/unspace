@@ -1,19 +1,18 @@
-// admin not required in this module; storage operations use @google-cloud/storage
-const {Storage} = require("@google-cloud/storage");
+/* functions/services/storage.js */
+const admin = require("firebase-admin");
 
-// Initialize Google Cloud Storage
-const storage = new Storage();
+// Helper: Get the bucket from the existing Admin SDK
+function getBucket() {
+  return admin.storage().bucket(); 
+}
 
 /**
  * Upload file to Firebase Storage
- * @param {Buffer} fileBuffer - File buffer
- * @param {string} fileName - File name
- * @param {string} folder - Folder path in storage
- * @param {string} contentType - MIME type
+ * Used for legacy/emulator support. In production, frontend uploads directly.
  */
 async function uploadFile(fileBuffer, fileName, folder = "uploads", contentType = "image/jpeg") {
   try {
-    const bucket = storage.bucket(process.env.FIREBASE_STORAGE_BUCKET);
+    const bucket = getBucket();
     const filePath = `${folder}/${Date.now()}_${fileName}`;
     const file = bucket.file(filePath);
 
@@ -24,10 +23,9 @@ async function uploadFile(fileBuffer, fileName, folder = "uploads", contentType 
       },
     });
 
-    // Make the file publicly accessible
     await file.makePublic();
 
-    // Get the public URL
+    // Construct the public URL manually to avoid dependency on @google-cloud/storage
     const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
 
     return {
@@ -43,26 +41,25 @@ async function uploadFile(fileBuffer, fileName, folder = "uploads", contentType 
 
 /**
  * Delete file from Firebase Storage
- * @param {string} filePath - File path in storage
  */
 async function deleteFile(filePath) {
   try {
-    const bucket = storage.bucket(process.env.FIREBASE_STORAGE_BUCKET);
-    const file = bucket.file(filePath);
+    const bucket = getBucket();
+    // Handle full URLs or relative paths
+    const relativePath = filePath.replace(`https://storage.googleapis.com/${bucket.name}/`, '');
+    const file = bucket.file(relativePath);
 
     await file.delete();
-    console.log(`File deleted: ${filePath}`);
+    console.log(`File deleted: ${relativePath}`);
     return true;
   } catch (error) {
-    console.error("File deletion failed:", error);
+    console.warn("File deletion failed (file might not exist):", error.message);
     return false;
   }
 }
 
 /**
- * Upload multiple files
- * @param {Array} files - Array of file objects with buffer, name, type
- * @param {string} folder - Folder path
+ * Upload multiple files (Legacy Support)
  */
 async function uploadMultipleFiles(files, folder = "uploads") {
   const uploadPromises = files.map((file) =>
@@ -74,17 +71,18 @@ async function uploadMultipleFiles(files, folder = "uploads") {
     return results;
   } catch (error) {
     console.error("Multiple file upload failed:", error);
-    throw new Error("Multiple file upload failed");
+    // Return empty array to prevent crashing the calling function
+    return []; 
   }
 }
 
 /**
  * Get file metadata
- * @param {string} filePath - File path in storage
+ * Restored functionality using firebase-admin
  */
 async function getFileMetadata(filePath) {
   try {
-    const bucket = storage.bucket(process.env.FIREBASE_STORAGE_BUCKET);
+    const bucket = getBucket();
     const file = bucket.file(filePath);
     const [metadata] = await file.getMetadata();
 
@@ -102,13 +100,12 @@ async function getFileMetadata(filePath) {
 }
 
 /**
- * Generate signed URL for private file access
- * @param {string} filePath - File path in storage
- * @param {number} expirationMinutes - URL expiration in minutes
+ * Generate signed URL
+ * Restored functionality using firebase-admin
  */
 async function generateSignedUrl(filePath, expirationMinutes = 60) {
   try {
-    const bucket = storage.bucket(process.env.FIREBASE_STORAGE_BUCKET);
+    const bucket = getBucket();
     const file = bucket.file(filePath);
 
     const [signedUrl] = await file.getSignedUrl({
@@ -119,7 +116,7 @@ async function generateSignedUrl(filePath, expirationMinutes = 60) {
     return signedUrl;
   } catch (error) {
     console.error("Failed to generate signed URL:", error);
-    throw new Error("Failed to generate signed URL");
+    return null;
   }
 }
 

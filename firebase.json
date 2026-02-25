@@ -32,7 +32,7 @@
     "singleProjectMode": true
   },
   "firestore": {
-    "database": "unspace4",
+    "database": "(default)",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },

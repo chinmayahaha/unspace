@@ -1,350 +1,278 @@
+/* functions/handlers/marketplace.js */
 const admin = require("firebase-admin");
-const {logUserAction} = require("../services/analytics");
-const {uploadMultipleFiles} = require("../services/storage");
-const {createCheckoutSession} = require("../services/payments");
+const { HttpsError } = require("firebase-functions/v2/https");
+const { logUserAction } = require("../services/analytics");
+const { createCheckoutSession } = require("../services/payments");
 
-/**
- * HELPER: Unwraps data safely
- */
-function unwrapData(data) {
-  if (!data) return {}; 
-  if (typeof data === 'object' && data.data) {
-    return data.data;
-  }
+function unwrapData(request) {
+  const data = request.data || request;
+  if (!data) return {};
+  if (typeof data === "object" && data.data) return data.data;
   return data;
 }
 
-/**
- * HELPER: Gets User ID safely
- */
-/**
- * HELPER: Gets User ID safely
- */
-function getUserId(context) {
-  // 1. Log what the backend sees (Check your VS Code Terminal for this!)
-  console.log("Auth Debug:", context.auth ? "User is " + context.auth.uid : "No Auth Token");
-
-  // 2. Try real Auth
-  if (context.auth && context.auth.uid) {
-    return context.auth.uid;
-  }
-
-  // 3. EMULATOR FALLBACK (Restored but logged)
-  // If you are on localhost and Auth fails, we return a fallback ID so you don't crash.
-  const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true' || 
-                     process.env.FIREBASE_AUTH_EMULATOR_HOST;
-  
-  if (isEmulator) {
-    console.warn("⚠️ EMULATOR: Using fallback user ID because real Auth failed.");
-    return "emulator-test-user-123"; 
-  }
-
+function getUserId(request) {
+  // FIX: v2 auth lives at request.auth, not context.auth
+  if (request.auth?.uid) return request.auth.uid;
+  const isEmulator = process.env.FUNCTIONS_EMULATOR === "true" || process.env.FIREBASE_AUTH_EMULATOR_HOST;
+  if (isEmulator) return "emulator-test-user-123";
   return null;
 }
 
-/**
- * Create basic user profile
- */
-async function createUserProfile(userRecord) {
+async function createListing(request) {
   try {
-    const db = admin.firestore();
-    const uid = userRecord.uid || userRecord.id;
-    const profileRef = db.collection("users").doc(uid);
+    const userId = getUserId(request);
+    if (!userId) throw new HttpsError("unauthenticated", "You must be logged in to create a listing.");
 
-    const profileData = {
-      id: uid,
-      email: userRecord.email || null,
-      name: userRecord.displayName || (userRecord.email ? userRecord.email.split("@")[0] : "Student"),
-      createdAt: new Date(), 
+    const input = unwrapData(request);
+    const { title, description, price, category, condition, images } = input;
+
+    if (!title || !price || !category) throw new HttpsError("invalid-argument", "Missing required fields.");
+    const finalPrice = parseFloat(price);
+    if (isNaN(finalPrice)) throw new HttpsError("invalid-argument", "Price must be a valid number.");
+
+    const db = admin.firestore();
+    const listingRef = db.collection("listings").doc();
+
+    const listingData = {
+      id: listingRef.id,
+      title,
+      description: description || "",
+      price: finalPrice,
+      category,
+      condition: condition || "good",
+      images: images || [],
+      sellerId: userId,
+      userId: userId, // needed by Firestore rules
+      status: "pending", // pending | active | sold | deleted
+      featured: false,
+      createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    await profileRef.set(profileData, {merge: true});
-    return {success: true, userId: uid};
+    await listingRef.set(listingData);
+    try { await logUserAction(userId, "listing_created", { listingId: listingRef.id }); } catch (e) {}
+    return { listingId: listingRef.id, ...listingData };
   } catch (error) {
-    console.error("createUserProfile error:", error);
-    return {success: false, error: error.message};
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
   }
 }
 
-/**
- * Create a new marketplace listing
- */
-async function createListing(data, context) {
-  const userId = getUserId(context);
-  if (!userId) {
-    throw new Error("Authentication required: Unable to verify user.");
-  }
-
-  const input = unwrapData(data);
-  const {title, description, price, category, condition, images} = input;
-
-  if (!title || !price || !category) {
-    throw new Error(`Missing fields! Received: Title=${title}, Price=${price}, Category=${category}`);
-  }
-
-  const db = admin.firestore();
-  const listingRef = db.collection("listings").doc();
-  const imageUrls = images || [];
-
-  const listingData = {
-    id: listingRef.id,
-    title,
-    description: description || "",
-    price: parseFloat(price),
-    category,
-    condition: condition || "good",
-    images: imageUrls,
-    sellerId: userId,
-    status: "active",
-    featured: false,
-    createdAt: new Date(), 
-    updatedAt: new Date(),
-  };
-
-  await listingRef.set(listingData);
-
+async function getUserListings(request) {
   try {
-      await logUserAction(userId, "listing_created", {
-        listingId: listingRef.id,
-        category,
-        price: parseFloat(price),
-      });
-  } catch (err) { }
+    const userId = getUserId(request);
+    if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-  return {listingId: listingRef.id, ...listingData};
-}
-
-/**
- * Get a single listing
- */
-async function getListing(data, context) {
-  const input = unwrapData(data);
-  const {listingId} = input;
-
-  if (!listingId) throw new Error("Listing ID is required");
-
-  const db = admin.firestore();
-  const listingDoc = await db.collection("listings").doc(listingId).get();
-
-  if (!listingDoc.exists) throw new Error("Listing not found");
-
-  return {id: listingDoc.id, ...listingDoc.data()};
-}
-
-/**
- * Get listings for the CURRENT USER (Dashboard)
- * NEW FUNCTION: This was missing and causing your dashboard issues.
- */
-async function getUserListings(data, context) {
-  const userId = getUserId(context);
-  if (!userId) throw new Error("Authentication required");
-
-  const db = admin.firestore();
-  
-  // Fetch listings where sellerId matches the current user
-  const query = db.collection("listings")
+    const db = admin.firestore();
+    const snapshot = await db.collection("listings")
       .where("sellerId", "==", userId)
-      .where("status", "in", ["active", "sold"])
-      .orderBy("createdAt", "desc");
+      .where("status", "in", ["active", "sold", "pending"])
+      .orderBy("createdAt", "desc")
+      .get();
 
-  const snapshot = await query.get();
-  const listings = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
-  return { listings };
+    return { listings: snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) };
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
 }
 
-/**
- * Get all listings (Marketplace Feed)
- * FIXED: Added NaN checks to prevent emulator/production crashes.
- */
-/* Update inside functions/handlers/marketplace.js */
+async function getAllListings(request) {
+  try {
+    const input = unwrapData(request);
+    const { category, condition, limit = 20, lastDocId } = input;
 
-/**
- * Get all listings (Marketplace Feed)
- * UPDATED: Optimized for scalability. Removed in-memory search.
- */
-async function getAllListings(data, context) {
-  const input = unwrapData(data);
-  const { category, minPrice, maxPrice, condition, limit = 20, lastDocId } = input;
+    const db = admin.firestore();
+    let query = db.collection("listings").where("status", "==", "active").orderBy("createdAt", "desc");
 
-  const db = admin.firestore();
-  let query = db.collection("listings")
-      .where("status", "==", "active")
-      .orderBy("createdAt", "desc");
+    if (category && category !== "All") query = query.where("category", "==", category);
+    if (condition) query = query.where("condition", "==", condition);
 
-  // Database-Level Filters (Fast & Scalable)
-  if (category && category !== "All") query = query.where("category", "==", category);
-  if (condition) query = query.where("condition", "==", condition);
-  
-  // NOTE: Firestore cannot handle range filters (><) on multiple fields easily alongside orderBy.
-  // We keep the logic simple here to prevent "Index Needed" errors.
-  
-  // Pagination
-  if (lastDocId) {
-    const lastDoc = await db.collection("listings").doc(lastDocId).get();
-    if (lastDoc.exists) {
-        query = query.startAfter(lastDoc);
+    if (lastDocId) {
+      const lastDoc = await db.collection("listings").doc(lastDocId).get();
+      if (lastDoc.exists) query = query.startAfter(lastDoc);
     }
+
+    query = query.limit(limit);
+    const snapshot = await query.get();
+    const listings = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+    return {
+      listings,
+      hasMore: snapshot.docs.length === limit,
+      lastDocId: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
+    };
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
   }
-
-  query = query.limit(limit);
-
-  const snapshot = await query.get();
-  const listings = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
-  // REMOVED: In-memory "searchTerm" filtering. 
-  // Enterprise Rule: Never filter arrays in memory on the server.
-  // If you need Text Search, you MUST use Algolia, Typesense, or client-side filtering on small datasets.
-
-  return {
-    listings,
-    hasMore: snapshot.docs.length === limit,
-    lastDocId: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
-  };
 }
 
-/**
- * Update a listing
- */
-async function updateListing(data, context) {
-  const input = unwrapData(data);
-  const {listingId, title, description, price, category, condition, images} = input;
-  
-  const userId = getUserId(context);
-  if (!userId) throw new Error("Authentication required");
-  if (!listingId) throw new Error("Listing ID is required");
+async function getListing(request) {
+  try {
+    const input = unwrapData(request);
+    const { listingId } = input;
+    if (!listingId) throw new HttpsError("invalid-argument", "Listing ID is required");
 
-  const db = admin.firestore();
-  const listingRef = db.collection("listings").doc(listingId);
-  const listingDoc = await listingRef.get();
+    const db = admin.firestore();
+    const doc = await db.collection("listings").doc(listingId).get();
+    if (!doc.exists) throw new HttpsError("not-found", "Listing not found");
 
-  if (!listingDoc.exists) throw new Error("Listing not found");
-
-  const listing = listingDoc.data();
-  if (listing.sellerId !== userId) {
-    throw new Error("Not authorized to update this listing");
+    return { id: doc.id, ...doc.data() };
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
   }
-
-  const updateData = { updatedAt: new Date() };
-  if (title) updateData.title = title;
-  if (description !== undefined) updateData.description = description;
-  if (price) updateData.price = parseFloat(price);
-  if (category) updateData.category = category;
-  if (condition) updateData.condition = condition;
-  if (images) updateData.images = images;
-
-  await listingRef.update(updateData);
-  return {success: true, listingId};
 }
 
-/**
- * Delete a listing
- */
-async function deleteListing(data, context) {
-  const input = unwrapData(data);
-  const {listingId} = input;
-  
-  const userId = getUserId(context);
-  if (!userId) throw new Error("Authentication required");
+async function updateListing(request) {
+  try {
+    const userId = getUserId(request);
+    if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-  const db = admin.firestore();
-  const listingRef = db.collection("listings").doc(listingId);
-  const listingDoc = await listingRef.get();
+    const input = unwrapData(request);
+    const { listingId, title, description, price, category, condition, images } = input;
+    if (!listingId) throw new HttpsError("invalid-argument", "Listing ID is required");
 
-  if (!listingDoc.exists) throw new Error("Listing not found");
+    const db = admin.firestore();
+    const ref = db.collection("listings").doc(listingId);
+    const doc = await ref.get();
 
-  if (listingDoc.data().sellerId !== userId) {
-    throw new Error("Not authorized to delete this listing");
+    if (!doc.exists) throw new HttpsError("not-found", "Listing not found");
+    if (doc.data().sellerId !== userId) throw new HttpsError("permission-denied", "Not authorized");
+
+    const updateData = { updatedAt: new Date() };
+    if (title) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (price) updateData.price = parseFloat(price);
+    if (category) updateData.category = category;
+    if (condition) updateData.condition = condition;
+    if (images) updateData.images = images;
+
+    await ref.update(updateData);
+    return { success: true, listingId };
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
   }
-
-  await listingRef.update({
-    status: "deleted",
-    deletedAt: new Date(), 
-  });
-
-  return {success: true};
 }
 
-/**
- * Contact Seller & Send Notification
- */
-async function contactSeller(data, context) {
-  const input = unwrapData(data);
-  const {listingId, message} = input;
-  
-  const buyerId = getUserId(context);
-  if (!buyerId) throw new Error("Authentication required");
+async function deleteListing(request) {
+  try {
+    const userId = getUserId(request);
+    if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-  const db = admin.firestore();
-  const listingDoc = await db.collection("listings").doc(listingId).get();
-  
-  if (!listingDoc.exists) throw new Error("Listing not found");
-  const listing = listingDoc.data();
+    const input = unwrapData(request);
+    const { listingId } = input;
 
-  // 1. Save the message in the database (The "Chat")
-  const interestRef = db.collection("listing_interests").doc();
-  await interestRef.set({
-    listingId,
-    buyerId,
-    sellerId: listing.sellerId,
-    message: message || "",
-    status: "pending",
-    createdAt: new Date(), 
-  });
+    const db = admin.firestore();
+    const ref = db.collection("listings").doc(listingId);
+    const doc = await ref.get();
 
-  // 2. NEW: Send a Notification so it appears on the Dashboard!
-  // This connects the "Contact" button to the "Notifications" panel.
-  await db.collection("notifications").add({
-    toUserId: listing.sellerId, // Send to the seller
-    fromUserId: buyerId,        // From the buyer
-    type: "buy_request",
-    message: message || "I'm interested in this item!",
-    item: listing.title,
-    itemId: listingId,
-    createdAt: new Date(),
-    read: false
-  });
+    if (!doc.exists) throw new HttpsError("not-found", "Listing not found");
+    if (doc.data().sellerId !== userId) throw new HttpsError("permission-denied", "Not authorized");
 
-  return {success: true, interestId: interestRef.id};
-}
-/**
- * Feature Listing
- */
-async function featureListing(data, context) {
-  const input = unwrapData(data);
-  const {listingId} = input;
-  
-  const userId = getUserId(context);
-  if (!userId) throw new Error("Authentication required");
-
-  const db = admin.firestore();
-  const listingDoc = await db.collection("listings").doc(listingId).get();
-
-  if (!listingDoc.exists) throw new Error("Listing not found");
-  if (listingDoc.data().sellerId !== userId) throw new Error("Not authorized");
-
-  const checkoutSession = await createCheckoutSession({
-    userId,
-    type: "listing_featured",
-    itemId: listingId,
-    amount: 500,
-    description: `Feature listing: ${listingDoc.data().title}`,
-    successUrl: `${process.env.FRONTEND_URL}/marketplace?featured=true`,
-    cancelUrl: `${process.env.FRONTEND_URL}/marketplace/${listingId}`,
-  });
-
-  return checkoutSession;
+    await ref.update({ status: "deleted", deletedAt: new Date() });
+    return { success: true };
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
 }
 
-module.exports = {
-  createListing,
-  getListing,
-  getAllListings,
-  getUserListings, // <--- EXPORTED NEW FUNCTION
-  updateListing,
-  deleteListing,
-  contactSeller,
-  featureListing,
-  createUserProfile,
-};
+async function contactSeller(request) {
+  try {
+    const buyerId = getUserId(request);
+    if (!buyerId) throw new HttpsError("unauthenticated", "Authentication required");
+
+    const input = unwrapData(request);
+    const { listingId, message } = input;
+
+    const db = admin.firestore();
+    const listingDoc = await db.collection("listings").doc(listingId).get();
+    if (!listingDoc.exists) throw new HttpsError("not-found", "Listing not found");
+
+    const listing = listingDoc.data();
+    const sellerId = listing.sellerId;
+
+    // 1. Create conversation (new system)
+    const conversationId = `listing_${listingId}_${buyerId}_${sellerId}`;
+    const conversationRef = db.collection("conversations").doc(conversationId);
+    const convSnap = await conversationRef.get();
+
+    if (!convSnap.exists) {
+      await conversationRef.set({
+        id: conversationId,
+        itemType: "listing",
+        itemId: listingId,
+        itemTitle: listing.title,
+        itemImage: listing.images?.[0] || null,
+        participants: [buyerId, sellerId],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastMessage: message || "I'm interested in this item!",
+        lastMessageAt: new Date(),
+        lastMessageSenderId: buyerId,
+      });
+    }
+
+    await conversationRef.collection("messages").add({
+      conversationId,
+      senderId: buyerId,
+      text: message || "I'm interested in this item!",
+      type: "text",
+      createdAt: new Date(),
+      read: false,
+    });
+
+    if (convSnap.exists) {
+      await conversationRef.update({
+        lastMessage: message || "I'm interested in this item!",
+        lastMessageAt: new Date(),
+        lastMessageSenderId: buyerId,
+        updatedAt: new Date(),
+      });
+    }
+
+    // 2. Keep old notification for backward compat (shows in Dashboard)
+    await db.collection("notifications").add({
+      toUserId: sellerId,
+      fromUserId: buyerId,
+      type: "buy_request",
+      message: message || "I'm interested in this item!",
+      item: listing.title,
+      itemId: listingId,
+      conversationId, // link to conversation
+      createdAt: new Date(),
+      read: false,
+    });
+
+    return { success: true, conversationId };
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+async function featureListing(request) {
+  try {
+    const userId = getUserId(request);
+    if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
+
+    const input = unwrapData(request);
+    const { listingId } = input;
+
+    const db = admin.firestore();
+    const doc = await db.collection("listings").doc(listingId).get();
+    if (!doc.exists) throw new HttpsError("not-found", "Listing not found");
+    if (doc.data().sellerId !== userId) throw new HttpsError("permission-denied", "Not authorized");
+
+    return await createCheckoutSession({ userId, type: "listing_featured", itemId: listingId, amount: 500, description: `Feature listing: ${doc.data().title}`, successUrl: `${process.env.FRONTEND_URL}/marketplace?featured=true`, cancelUrl: `${process.env.FRONTEND_URL}/marketplace/${listingId}` });
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+module.exports = { createListing, getUserListings, getAllListings, getListing, updateListing, deleteListing, contactSeller, featureListing };

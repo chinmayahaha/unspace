@@ -1,128 +1,149 @@
+/* functions/handlers/admin.js */
 const admin = require("firebase-admin");
+const { HttpsError } = require("firebase-functions/v2/https");
 
-// --- CONFIGURATION ---
-// CHANGE THIS to a long, random string that ONLY YOU know.
-const DEPLOYMENT_SECRET = "UNi]BoVI&%qw)rJ!Ma+eW)4"; 
+const DEPLOYMENT_SECRET = "UNi]BoVI&%qw)rJ!Ma+eW)4";
 
-/**
- * HELPER: Enterprise Grade Admin Check
- * 1. Checks Auth
- * 2. Checks Custom Claims (Fastest, $0 cost)
- * 3. Checks Database Role (Fallback, 1 Read cost)
- */
-async function verifyAdmin(context) {
-    // 1. Fail if not logged in
-    if (!context.auth) throw new Error("Authentication required");
+// -------------------------------------------------------------------------
+// HELPER: Verify admin from v2 request object
+// -------------------------------------------------------------------------
+async function verifyAdmin(request) {
+  // FIX: v2 auth is at request.auth, not context.auth
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Authentication required");
+  }
 
-    // 2. CHECK CUSTOM CLAIMS (Best Practice)
-    // This allows admin access without reading the database every time.
-    if (context.auth.token.admin === true) {
-        return true;
-    }
+  // Check custom claim first (fast path)
+  if (request.auth.token.admin === true) return true;
 
-    // 3. FALLBACK: Check Database (Only if claim is missing)
-    const uid = context.auth.uid;
-    const db = admin.firestore();
-    const userDoc = await db.collection("users").doc(uid).get();
+  // Fallback: check Firestore
+  const uid = request.auth.uid;
+  const db = admin.firestore();
+  const userDoc = await db.collection("users").doc(uid).get();
 
-    if (!userDoc.exists || userDoc.data().role !== 'admin') {
-      console.warn(`Unauthorized Admin Access Attempt by: ${uid}`);
-      throw new Error("ACCESS DENIED: Admins only.");
-    }
-    
-    // If DB says admin but token doesn't, fix the token for next time
-    if (userDoc.data().role === 'admin') {
-        await admin.auth().setCustomUserClaims(uid, { admin: true });
-    }
-    
-    return true;
+  if (!userDoc.exists || userDoc.data().role !== "admin") {
+    console.warn(`Unauthorized Admin Access Attempt by: ${uid}`);
+    throw new HttpsError("permission-denied", "ACCESS DENIED: Admins only.");
+  }
+
+  // Auto-repair: set custom claim if missing
+  await admin.auth().setCustomUserClaims(uid, { admin: true });
+  return true;
 }
 
-// 1. Get Stats (Dashboard Metrics)
-exports.getAdminStats = async (data, context) => {
-    await verifyAdmin(context);
+// -------------------------------------------------------------------------
+// 1. Get Admin Stats
+// -------------------------------------------------------------------------
+exports.getAdminStats = async (request) => {
+  try {
+    await verifyAdmin(request);
     const db = admin.firestore();
-    
-    // Using snapshot.size is fine for < 10k users. 
-    // For > 10k, switch to count() aggregation queries.
-    const usersSnap = await db.collection("users").get();
-    const listingsSnap = await db.collection("listings").get();
-    const booksSnap = await db.collection("books").get();
-    const adsSnap = await db.collection("serviceRequests").get();
-    const reportsSnap = await db.collection("reports").get();
+
+    const [usersSnap, listingsSnap, booksSnap, adsSnap, reportsSnap] = await Promise.all([
+      db.collection("users").get(),
+      db.collection("listings").get(),
+      db.collection("books").get(),
+      db.collection("serviceRequests").get(),
+      db.collection("reports").get(),
+    ]);
 
     return {
-        totalUsers: usersSnap.size,
-        totalListings: listingsSnap.size,
-        totalBooks: booksSnap.size,
-        totalAds: adsSnap.size,
-        pendingReports: reportsSnap.size
+      totalUsers: usersSnap.size,
+      totalListings: listingsSnap.size,
+      totalBooks: booksSnap.size,
+      totalAds: adsSnap.size,
+      pendingReports: reportsSnap.size,
     };
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
 };
 
-// 2. User Management (The Ban Hammer)
-exports.getAllUsers = async (data, context) => {
-    await verifyAdmin(context);
+// -------------------------------------------------------------------------
+// 2. Get All Users
+// -------------------------------------------------------------------------
+exports.getAllUsers = async (request) => {
+  try {
+    await verifyAdmin(request);
     const db = admin.firestore();
     const snapshot = await db.collection("users").orderBy("createdAt", "desc").limit(50).get();
-    return { users: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) };
+    return { users: snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) };
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
 };
 
-exports.banUser = async (data, context) => {
-    await verifyAdmin(context);
-    const { targetUserId, ban } = data; 
+// -------------------------------------------------------------------------
+// 3. Ban User
+// -------------------------------------------------------------------------
+exports.banUser = async (request) => {
+  try {
+    await verifyAdmin(request);
+    // FIX: data is at request.data in v2
+    const { targetUserId, ban } = request.data;
     const db = admin.firestore();
-    
-    // Update DB status
+
     await db.collection("users").doc(targetUserId).update({
-        isBanned: ban,
-        bannedAt: ban ? new Date() : null
+      isBanned: ban,
+      bannedAt: ban ? new Date() : null,
     });
-    
-    // ENTERPRISE ADDITION: Immediate Session Kill
-    // If we ban them, we must invalidate their login token immediately.
+
     if (ban) {
-        try {
-            await admin.auth().revokeRefreshTokens(targetUserId);
-        } catch (e) {
-            console.error("Failed to revoke tokens", e);
-        }
+      try {
+        await admin.auth().revokeRefreshTokens(targetUserId);
+      } catch (e) {
+        console.error("Failed to revoke tokens", e);
+      }
     }
 
     return { success: true };
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
 };
 
-// 3. Universal Delete
-exports.deleteAnyItem = async (data, context) => {
-    await verifyAdmin(context);
-    const { collection, id } = data;
+// -------------------------------------------------------------------------
+// 4. Delete Any Item
+// -------------------------------------------------------------------------
+exports.deleteAnyItem = async (request) => {
+  try {
+    await verifyAdmin(request);
+    const { collection, id } = request.data;
     const db = admin.firestore();
     await db.collection(collection).doc(id).delete();
     return { success: true };
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
 };
 
-/**
- * 4. SECURE "Make Me Admin"
- * This allows you to promote yourself, but ONLY if you have the secret key.
- */
-exports.makeMeAdmin = async (data, context) => {
-    // 1. Check if user is logged in
-    if (!context.auth) throw new Error("Login first");
-    
-    // 2. SECURITY CHECK: Check the secret password
-    if (data.secretKey !== DEPLOYMENT_SECRET) {
-        console.warn(`Failed Admin Claim by ${context.auth.uid}`);
-        throw new Error("Invalid Secret Key. Incident Logged.");
+// -------------------------------------------------------------------------
+// 5. Make Me Admin
+// -------------------------------------------------------------------------
+exports.makeMeAdmin = async (request) => {
+  try {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Login first");
     }
 
-    const uid = context.auth.uid;
+    if (request.data.secretKey !== DEPLOYMENT_SECRET) {
+      console.warn(`Failed Admin Claim by ${request.auth.uid}`);
+      throw new HttpsError("permission-denied", "INCORRECT SECRET KEY. Access Denied.");
+    }
+
+    const uid = request.auth.uid;
     const db = admin.firestore();
 
-    // 3. Update Database Role
-    await db.collection("users").doc(uid).set({ role: 'admin' }, { merge: true });
-    
-    // 4. Set Custom Claim (The "VIP Pass" attached to your user token)
+    await db.collection("users").doc(uid).set({ role: "admin" }, { merge: true });
     await admin.auth().setCustomUserClaims(uid, { admin: true });
-    
-    return { success: true, message: "Admin privileges granted. Please Sign Out and Sign In again to refresh permissions." };
+
+    return { success: true, message: "Admin privileges granted. Please Sign Out and Sign In again." };
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
 };
