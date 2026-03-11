@@ -1,175 +1,39 @@
-# University Web Application - Complete Documentation
+# Unspace - Deployment Guide
 
 ## Project Overview
 
-This is a comprehensive university web application built with Firebase and React, featuring a modular backend architecture and minimal functional frontend. The application provides marketplace, book exchange, community hub, business directory, and promotional services for university students.
+Unspace is a university web application built with React and Firebase, featuring marketplace, book exchange, community hub, business directory, and promotional services.
 
 ## Architecture
 
-### Backend Technologies
-- **Firebase Functions (Node.js)**: Main API endpoints and business logic
-- **Firebase Authentication**: User authentication and authorization
-- **Firestore Database**: NoSQL document database for all data storage
-- **Firebase Storage**: File uploads (images, documents)
-- **Python Functions**: AI-powered features (OpenAI integration)
-- **Stripe**: Payment processing for premium features
+- **Frontend**: React 18 with React Router
+- **Backend**: Firebase Functions (Node.js 22)
+- **Database**: Firestore
+- **Storage**: Firebase Storage
+- **Auth**: Firebase Authentication (Google OAuth)
+- **Hosting**: Firebase Hosting
 
-### Frontend Technologies
-- **React**: User interface framework
-- **React Router**: Client-side routing
-- **Firebase JS SDK**: Client-side Firebase integration
-- **Font Awesome**: Icons and UI elements
+## Prerequisites
 
-## Project Structure
-
-```
-unspace/
-├── functions/                    # Firebase Functions (Node.js)
-│   ├── handlers/                 # Feature-specific handlers
-│   │   ├── marketplace.js       # Marketplace functionality
-│   │   ├── bookExchange.js      # Book exchange features
-│   │   ├── community.js         # Community posts and comments
-│   │   ├── businessX.js         # Business directory
-│   │   └── adsX.js              # Promotional services
-│   ├── services/                # Shared services
-│   │   ├── analytics.js         # User analytics tracking
-│   │   ├── payments.js          # Stripe payment integration
-│   │   └── storage.js           # File upload handling
-│   ├── index.js                 # Main functions entry point
-│   └── package.json             # Node.js dependencies
-├── pythonfunctions/             # Python AI functions
-│   ├── main.py                  # AI processing functions
-│   └── requirements.txt         # Python dependencies
-├── src/                         # React frontend
-│   ├── components/              # Reusable React components
-│   ├── pages/                   # Page components
-│   ├── contexts/                # React contexts (Auth)
-│   ├── config/                  # Configuration files
-│   └── firebase.js              # Firebase configuration
-├── firebase.json               # Firebase project configuration
-├── firestore.rules             # Database security rules
-├── storage.rules               # Storage security rules
-└── FIRESTORE_SCHEMA.md         # Database schema documentation
-```
-
-## Features Implemented
-
-### 1. Authentication & User Management
-- Google OAuth sign-in with popup
-- User profile creation and management
-- Admin role management
-- Protected routes and authorization
-
-### 2. Marketplace (Buy & Sell)
-- Create, read, update, delete listings
-- Image upload support
-- Category and condition filtering
-- Price range filtering
-- Search functionality
-- Contact seller feature
-- Featured listings (paid service)
-- AI-generated descriptions
-
-### 3. Book Exchange
-- Add books for exchange
-- Find matching books
-- Exchange request system
-- Course-based book organization
-- ISBN and edition tracking
-- Exchange status management
-
-### 4. Community Hub
-- Create and manage posts
-- Comment system
-- Like/unlike posts
-- Category-based organization
-- Official announcements (admin)
-- Content moderation (AI-powered)
-- Search and filtering
-
-### 5. BusinessX (Student Business Directory)
-- Business registration and profiles
-- Logo upload support
-- Review and rating system
-- Business verification (admin)
-- Category-based organization
-- Contact information management
-
-### 6. AdsX (Promotional Services)
-- Service request submission
-- Creative asset uploads
-- Request status management
-- Service provider assignment
-- Promotion services (paid)
-- Multiple service types support
-
-### 7. Analytics Service
-- User action tracking
-- Comprehensive analytics events
-- Admin analytics dashboard
-- User behavior insights
-
-### 8. Payment Integration
-- Stripe checkout sessions
-- Featured listing payments
-- Service promotion payments
-- Webhook handling
-- Order tracking
-
-### 9. AI Features
-- Automatic listing description generation
-- Content moderation for posts/comments
-- OpenAI GPT-3.5 integration
-- Asynchronous task processing
-
-## Database Schema
-
-The application uses Firestore with the following main collections:
-
-- **users**: User profiles and preferences
-- **listings**: Marketplace items
-- **books**: Books available for exchange
-- **exchangeRequests**: Book exchange requests
-- **posts**: Community posts
-- **comments**: Post comments
-- **businesses**: Student businesses
-- **reviews**: Business reviews
-- **serviceRequests**: AdsX service requests
-- **analyticsEvents**: User action tracking
-- **aiTasks**: AI processing queue
-- **orders**: Payment orders
-- **admins**: Admin user management
-
-See `FIRESTORE_SCHEMA.md` for detailed schema documentation.
-
-## Setup and Installation
-
-### Prerequisites
-- Node.js 20+ and npm
-- Python 3.8+
-- Firebase CLI
+- Node.js 22+ and npm
+- Firebase CLI (`npm install -g firebase-tools`)
 - Firebase project with Authentication, Firestore, Storage, and Functions enabled
-- Stripe account
-- OpenAI API key
 
-### 1. Firebase Setup
+## Environment Setup
+
+### 1. Clone and Install Dependencies
 
 ```bash
-# Install Firebase CLI
-npm install -g firebase-tools
-
-# Login to Firebase
-firebase login
-
-# Initialize project (if not already done)
-firebase init
+cd unspace
+npm install
+cd functions
+npm install
 ```
 
 ### 2. Environment Variables
 
-Create `.env` files in the appropriate directories:
+Create `.env` file in root directory:
 
-**Root directory (.env):**
 ```env
 REACT_APP_API_KEY=your_firebase_api_key
 REACT_APP_AUTH_DOMAIN=your_project.firebaseapp.com
@@ -180,79 +44,48 @@ REACT_APP_APP_ID=your_app_id
 REACT_APP_MEASUREMENT_ID=your_measurement_id
 ```
 
-**Functions directory (.env):**
+Create `.env` file in `functions/` directory:
+
 ```env
 STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
 FIREBASE_STORAGE_BUCKET=your_project.appspot.com
 FRONTEND_URL=http://localhost:3000
 ```
 
-**Python functions directory (.env):**
-```env
-OPENAI_API_KEY=sk-your_openai_api_key
-GOOGLE_APPLICATION_CREDENTIALS=path_to_service_account_key.json
-```
+### 3. Firebase Console Setup
 
-### 3. Backend Setup
+1. Go to [Firebase Console](https://console.firebase.google.com)
+2. Create or select your project
+3. **Authentication**: Enable Google sign-in
+4. **Firestore**: Create database (start in test mode or set rules)
+5. **Storage**: Enable storage
+
+## Local Development
+
+### Running Locally
 
 ```bash
-# Install Node.js dependencies
+# Start React frontend
+npm start
+
+# Start Firebase emulators (in separate terminal)
 cd functions
-npm install
-
-# Install Python dependencies
-cd ../pythonfunctions
-pip install -r requirements.txt
+firebase emulators:start
 ```
 
-### 4. Frontend Setup
+### Firebase Emulator Suite
 
-```bash
-# Install React dependencies
-npm install
-```
+The project is configured with emulators for:
+- Auth (port 9099)
+- Functions (port 5001)
+- Firestore (port 8080)
+- Storage (port 9199)
 
-### 5. Firebase Configuration
-
-1. **Enable Authentication**: Go to Firebase Console > Authentication > Sign-in method > Enable Google
-2. **Create Firestore Database**: Go to Firestore Database > Create database
-3. **Set up Storage**: Go to Storage > Get started
-4. **Deploy Security Rules**: 
-   ```bash
-   firebase deploy --only firestore:rules,storage
-   ```
-
-### 6. Stripe Setup
-
-1. Create a Stripe account
-2. Get your API keys from the Stripe dashboard
-3. Set up webhook endpoints pointing to your Firebase Functions
-4. Configure webhook events: `checkout.session.completed`, `payment_intent.succeeded`, `payment_intent.payment_failed`
-
-### 7. OpenAI Setup
-
-1. Create an OpenAI account
-2. Generate an API key
-3. Add the key to your Python functions environment
+Access emulator UI at http://localhost:4000
 
 ## Deployment
 
-### 1. Deploy Firebase Functions
-
-```bash
-cd functions
-firebase deploy --only functions
-```
-
-### 2. Deploy Python Functions
-
-```bash
-cd pythonfunctions
-# Deploy using Firebase Functions for Python
-firebase deploy --only functions:pythonfunctions
-```
-
-### 3. Deploy Frontend
+### Option 1: Firebase Hosting (Recommended)
 
 ```bash
 # Build React app
@@ -262,215 +95,162 @@ npm run build
 firebase deploy --only hosting
 ```
 
-### 4. Set up Admin Users
+### Option 2: Firebase App Hosting
 
-After deployment, manually add admin users to the `admins` collection in Firestore:
+The project includes `apphosting.yaml` for App Hosting on Cloud Run. Configure in Firebase Console > App Hosting.
 
-```javascript
-// Add to admins/{userId}
-{
-  userId: "user_uid_here",
-  role: "super_admin",
-  permissions: ["all"],
-  assignedBy: "system",
-  createdAt: timestamp
-}
-```
+### Deploy Firebase Functions
 
-## API Endpoints
-
-### Marketplace Functions
-- `createListing(data, context)` - Create new marketplace listing
-- `getListing(data, context)` - Get single listing
-- `getAllListings(data, context)` - Get listings with filters
-- `updateListing(data, context)` - Update listing
-- `deleteListing(data, context)` - Delete listing
-- `contactSeller(data, context)` - Contact seller about listing
-- `featureListing(data, context)` - Feature listing (paid)
-
-### Book Exchange Functions
-- `addBookForExchange(data, context)` - Add book for exchange
-- `findMatchingBooks(data, context)` - Find matching books
-- `initiateExchangeRequest(data, context)` - Start exchange request
-- `manageExchangeStatus(data, context)` - Accept/decline exchange
-- `getUserExchangeRequests(data, context)` - Get user's exchanges
-- `getAllBooks(data, context)` - Get all available books
-
-### Community Functions
-- `createPost(data, context)` - Create community post
-- `getPosts(data, context)` - Get posts with filters
-- `getPost(data, context)` - Get single post
-- `deletePost(data, context)` - Delete post
-- `addComment(data, context)` - Add comment to post
-- `getComments(data, context)` - Get post comments
-- `togglePostLike(data, context)` - Like/unlike post
-- `postOfficialAnnouncement(data, context)` - Admin announcements
-
-### BusinessX Functions
-- `registerBusiness(data, context)` - Register new business
-- `getBusinessProfile(data, context)` - Get business details
-- `getAllBusinesses(data, context)` - Get businesses with filters
-- `updateBusinessProfile(data, context)` - Update business
-- `addReview(data, context)` - Add business review
-- `getReviews(data, context)` - Get business reviews
-- `verifyBusiness(data, context)` - Verify business (admin)
-
-### AdsX Functions
-- `submitServiceRequest(data, context)` - Submit service request
-- `getRequests(data, context)` - Get service requests
-- `updateRequestStatus(data, context)` - Update request status
-- `assignRequest(data, context)` - Assign request to provider
-- `promoteRequest(data, context)` - Promote request (paid)
-- `getRequestDetails(data, context)` - Get request details
-
-## Security
-
-### Firestore Security Rules
-The application implements comprehensive security rules ensuring:
-- Users can only access their own data
-- Public data is readable by all authenticated users
-- Admin functions are restricted to admin users
-- Analytics data is write-only for users
-
-### Authentication
-- All API endpoints require authentication
-- User ownership validation for all operations
-- Admin role checking for administrative functions
-
-## Monitoring and Analytics
-
-### Built-in Analytics
-- User action tracking across all features
-- Performance monitoring
-- Error logging and reporting
-- Custom analytics events
-
-### Firebase Analytics
-- Automatic user behavior tracking
-- Custom event tracking
-- Conversion tracking
-- User journey analysis
-
-## Testing
-
-### Backend Testing
 ```bash
 cd functions
-npm test
+firebase deploy --only functions
 ```
 
-### Frontend Testing
+### Deploy Everything
+
 ```bash
-npm test
+# Build and deploy hosting
+npm run build
+firebase deploy --only hosting
+
+# Deploy functions
+cd functions
+firebase deploy --only functions
 ```
 
-### Integration Testing
-Use Firebase emulators for local testing:
-```bash
-firebase emulators:start
+## Firebase Console Configuration
+
+### Enable Authentication
+
+1. Go to Authentication > Sign-in method
+2. Enable Google provider
+3. Add your domain to authorized domains (for production)
+
+### Set Up Firestore
+
+1. Create database in desired region
+2. Deploy security rules:
+   ```bash
+   firebase deploy --only firestore:rules
+   ```
+
+### Set Up Storage
+
+1. Enable Storage in Firebase Console
+2. Deploy storage rules:
+   ```bash
+   firebase deploy --only storage
+   ```
+
+## Stripe Integration (Optional)
+
+If using payments:
+
+1. Create Stripe account
+2. Get API keys from Stripe Dashboard
+3. Add to functions/.env:
+   ```
+   STRIPE_SECRET_KEY=sk_test_...
+   ```
+4. Configure webhooks in Stripe dashboard pointing to your deployed functions
+
+## Admin Setup
+
+After deployment, manually add admin users to Firestore:
+
+Collection: `admins/{userId}`
+```json
+{
+  "userId": "user_uid_here",
+  "role": "super_admin",
+  "permissions": ["all"],
+  "assignedBy": "system",
+  "createdAt": "timestamp"
+}
 ```
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Authentication Errors**
-   - Check Firebase configuration
-   - Verify Google OAuth setup
-   - Ensure proper domain configuration
+1. **Function deployment fails**
+   - Check Node.js version: `node --version` (should be 22)
+   - Verify Firebase CLI: `firebase --version`
+   - Check functions/package.json dependencies
 
-2. **Function Deployment Issues**
-   - Check Node.js version compatibility
-   - Verify environment variables
-   - Check Firebase project permissions
+2. **Authentication errors**
+   - Verify Firebase config in .env
+   - Check authorized domains in Firebase Console
+   - Ensure Google OAuth is enabled
 
-3. **Database Permission Errors**
-   - Verify Firestore security rules
-   - Check user authentication status
-   - Ensure proper data structure
+3. **Firestore permission errors**
+   - Check firestore.rules file
+   - Verify authentication state
 
-4. **Payment Integration Issues**
-   - Verify Stripe API keys
-   - Check webhook configuration
-   - Ensure proper error handling
+4. **Build errors**
+   - Clear node_modules and reinstall: `rm -rf node_modules && npm install`
+   - Check for ESBuild/Node compatibility issues
 
 ### Debug Mode
-Enable debug logging by setting environment variables:
-```env
-DEBUG=true
-FIREBASE_DEBUG=true
+
+```bash
+# View function logs
+cd functions
+firebase functions:log
+
+# View hosting logs
+firebase hosting:log
 ```
 
-## Performance Optimization
+## Project Structure
 
-### Backend Optimizations
-- Function cold start optimization
-- Database query optimization
-- Image compression and resizing
-- Caching strategies
+```
+unspace/
+├── src/                    # React frontend
+│   ├── components/        # Reusable components
+│   ├── pages/             # Page components
+│   ├── features/          # Feature modules
+│   └── firebase.js        # Firebase config
+├── functions/             # Firebase Functions
+│   ├── handlers/         # Feature handlers
+│   ├── services/         # Shared services
+│   └── index.js          # Entry point
+├── public/               # Static assets
+├── build/                # Production build
+├── firebase.json         # Firebase config
+├── apphosting.yaml       # App Hosting config
+└── tailwind.config.js    # Tailwind config
+```
 
-### Frontend Optimizations
-- Code splitting and lazy loading
-- Image optimization
-- Bundle size optimization
-- Progressive web app features
+## CI/CD Setup (GitHub Actions)
 
-## Future Enhancements
+Example workflow in `.github/workflows/firebase-deploy.yml`:
 
-### Planned Features
-- Real-time chat system
-- Mobile app development
-- Advanced analytics dashboard
-- Machine learning recommendations
-- Video call integration
-- Advanced payment options
+```yaml
+name: Deploy to Firebase
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm run build
+      - uses: FirebaseExtended/action-hosting-deploy@v1
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: your-project-id
+```
 
-### Scalability Considerations
-- Database sharding strategies
-- CDN implementation
-- Microservices architecture
-- Load balancing
-- Caching layers
+## Support
 
-## Support and Maintenance
-
-### Regular Maintenance Tasks
-- Security updates
-- Dependency updates
-- Performance monitoring
-- Backup verification
-- Error log analysis
-
-### Monitoring Setup
-- Set up Firebase Performance Monitoring
-- Configure error reporting
-- Set up uptime monitoring
-- Implement health checks
-
-## Contributing
-
-### Development Workflow
-1. Fork the repository
-2. Create feature branch
-3. Implement changes
-4. Test thoroughly
-5. Submit pull request
-
-### Code Standards
-- Follow ESLint configuration
-- Use TypeScript for new features
-- Write comprehensive tests
-- Document all functions
-- Follow naming conventions
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contact
-
-For questions and support, please contact the development team or create an issue in the repository.
-
----
-
-**Note**: This documentation covers the complete implementation of the university web application. All features are functional and ready for deployment with proper configuration of the required services.
+For issues, check:
+- Firebase Console > Functions > Logs
+- Firebase Console > Analytics > DebugView
+- Browser console for frontend errors
