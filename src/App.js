@@ -18,6 +18,7 @@ import './styles/global.css';
 const HomePage        = React.lazy(() => import('./pages/HomePage'));
 const Dashboard       = React.lazy(() => import('./pages/Dashboard'));
 const TermsPage       = React.lazy(() => import('./pages/TermsPage'));
+const AboutUsPage     = React.lazy(() => import('./pages/AboutUsPage'));
 const ContactPage     = React.lazy(() => import('./pages/ContactPage'));
 const MessagesPage = React.lazy(() => import('./pages/MessagesPage'));
 
@@ -55,6 +56,7 @@ const LostAndFoundPage = React.lazy(() => import('./features/lostfound/pages/Los
 const PostItemPage = React.lazy(() => import('./features/lostfound/pages/PostItemPage'));
 const ItemDetailPage = React.lazy(() => import('./features/lostfound/pages/ItemDetailPage'));
 
+
 const Loading = () => (
   <div style={{ color: 'white', padding: '2rem', textAlign: 'center' }}>
     Loading Unspace...
@@ -75,6 +77,7 @@ function App() {
             <Route path="/signin"  element={<SignIn />} />
             <Route path="/signup"  element={<SignUp />} />
             <Route path="/terms"   element={<Layout><TermsPage /></Layout>} />
+            <Route path="/about"   element={<Layout><AboutUsPage /></Layout>} />
             <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
 
             {/* Public browsing — anyone can view listings/books/businesses/ads */}
@@ -88,9 +91,7 @@ function App() {
             <Route path="/businessx"           element={<Layout><BusinessXPage /></Layout>} />
             <Route path="/businessx/:businessId" element={<Layout><BusinessDetailPage /></Layout>} />
             <Route path="/lostfound" element={<Layout><LostAndFoundPage /></Layout>} />
-            <Route path="/lostfound/:itemId" element={<Layout><ItemDetailPage /></Layout>} />
-
-            {/* =========================================================
+            <Route path="/lostfound/:itemId" element={<Layout><ItemDetailPage /></Layout>} />            {/* =========================================================
                 PROTECTED ROUTES — must be signed in
                 ProtectedRoute redirects to /signin if user is null,
                 eliminating ALL 401 errors at the source

@@ -203,6 +203,7 @@ const HomePage = () => {
             <div className="footer-col">
               <h4>Support</h4>
               <Link to="/contact">Contact</Link>
+              <Link to="/about">About Us</Link>
               <Link to="/terms">Terms</Link>
             </div>
           </div>

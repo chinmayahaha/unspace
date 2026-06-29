@@ -6,6 +6,7 @@ import { db } from '../../firebase';
 import { useAuth } from '../../features/auth/context/AuthContext';
 import LuxuryBackground from '../UI/LuxuryBackground';
 import './Layout.css';
+import { icon } from '@fortawesome/fontawesome-svg-core';
 
 const NAV_ITEMS = [
   { path: '/dashboard',     label: 'Dashboard',    icon: '📊' },
@@ -15,6 +16,7 @@ const NAV_ITEMS = [
   { path: '/adsx',          label: 'AdsX',         icon: '📢' },
   { path: '/messages',      label: 'Messages',     icon: '💬', showBadge: true },
   { path: '/terms',         label: 'Terms',        icon: '📜' },
+  { path: '/about',         label: 'About Us',     icon: 'ℹ️' },
   { path: '/contact',       label: 'Contact',      icon: '📞' },
 ];
 
