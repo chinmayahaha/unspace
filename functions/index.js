@@ -8,6 +8,8 @@
 
    const admin = require("firebase-admin");
    const { onRequest, onCall } = require("firebase-functions/v2/https");
+   const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+   const { defineSecret } = require("firebase-functions/params");
    const express = require("express");
    const cors    = require("cors");
    
@@ -34,6 +36,10 @@
    const { handleStripeWebhook } = require("./services/payments");
    const lostAndFoundHandlers = require("./handlers/lostAndFound");
    const messagingHandlers    = require("./handlers/messaging");
+   const contactHandlers      = require("./handlers/contact");
+
+   const gmailUser = defineSecret("GMAIL_USER");
+   const gmailAppPassword = defineSecret("GMAIL_APP_PASSWORD");
    
    // ----------------------------------------------------------------
    // HTTP / Express app  (Stripe webhook)
@@ -125,3 +131,19 @@ exports.getConversations = onCall(fnOpts, messagingHandlers.getConversations);
 exports.getMessages = onCall(fnOpts, messagingHandlers.getMessages);
 exports.markMessagesAsRead = onCall(fnOpts, messagingHandlers.markAsRead);
 exports.createConversation = onCall(fnOpts, messagingHandlers.createConversation);
+
+// -------------------------------------------------------------------------
+// CONTACT — email inbox when a form is submitted
+// -------------------------------------------------------------------------
+exports.onContactMessageCreated = onDocumentCreated(
+  {
+    document: "contactMessages/{msgId}",
+    region: "us-central1",
+    secrets: [gmailUser, gmailAppPassword],
+  },
+  (event) => contactHandlers.onContactMessageCreated(
+    event,
+    gmailUser.value(),
+    gmailAppPassword.value()
+  )
+);

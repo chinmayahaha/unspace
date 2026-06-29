@@ -173,7 +173,7 @@ const SubmitRequestPage = () => {
             {/* Budget & Timeline */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className={labelClass}>Budget ($)</label>
+                <label className={labelClass}>Budget </label>
                 <input type="number" name="budget" value={formData.budget}
                   onChange={handleInputChange}
                   placeholder="0.00" min="0" step="0.01" className={inputClass} />

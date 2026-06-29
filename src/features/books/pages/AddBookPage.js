@@ -196,7 +196,7 @@ const AddBookPage = () => {
 
             {/* PRICE */}
             <div>
-              <label className={labelClass}>Selling Price ($)</label>
+              <label className={labelClass}>Selling Price </label>
               <input type="number" name="price" value={formData.price} onChange={handleInputChange}
                 placeholder="0.00 (Leave empty for Free Exchange)" min="0" step="0.01" className={inputClass} />
               <p className="text-xs text-muted mt-2">If you want to swap for another book, leave this as 0 or empty.</p>

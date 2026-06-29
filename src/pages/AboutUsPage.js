@@ -147,10 +147,10 @@ const AboutUsPage = () => {
           <h2 className="text-2xl font-bold font-heading mb-4 text-white">Connect With Us</h2>
           <p className="text-muted mb-6">Have questions or feedback? Reach out to our team.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="https://instagram.com" target="_blank" rel="noreferrer" className="lux-btn-secondary">
+            <a href="https://www.instagram.com/unspace_pu/" target="_blank" rel="noreferrer" className="lux-btn-secondary">
               <FontAwesomeIcon icon={ICONS.INSTAGRAM || 'instagram'} /> Follow on Instagram
             </a>
-            <a href="mailto:support@unspace.com" className="lux-btn-secondary">
+            <a href="mailto:unspace.pu@gmail.com" className="lux-btn-secondary">
               <FontAwesomeIcon icon={ICONS.ENVELOPE || 'envelope'} /> Email Support
             </a>
           </div>

@@ -123,7 +123,7 @@ const CreateListingPage = () => {
                 onChange={e => setFormData({ ...formData, title: e.target.value })} />
             </div>
             <div>
-              <label style={{ display: 'block', color: '#aaa', marginBottom: '0.5rem' }}>Price ($)</label>
+              <label style={{ display: 'block', color: '#aaa', marginBottom: '0.5rem' }}>Price </label>
               <input type="number" className="lux-input" placeholder="0.00" required
                 style={{ width: '100%', padding: '10px', background: 'rgba(0,0,0,0.3)', border: '1px solid #333', color: 'white', borderRadius: '8px' }}
                 onChange={e => setFormData({ ...formData, price: e.target.value })} />

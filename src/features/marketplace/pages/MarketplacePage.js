@@ -99,13 +99,13 @@ const MarketplacePage = () => {
             <div className="flex gap-2 h-12">
                 <input 
                     type="number" 
-                    placeholder="Min $" 
+                    placeholder="Min " 
                     className="w-1/2 bg-white/5 border border-white/10 rounded-xl px-3 text-white outline-none focus:border-primary"
                     onChange={(e) => handleFilterChange('minPrice', e.target.value)} 
                 />
                 <input 
                     type="number" 
-                    placeholder="Max $" 
+                    placeholder="Max " 
                     className="w-1/2 bg-white/5 border border-white/10 rounded-xl px-3 text-white outline-none focus:border-primary"
                     onChange={(e) => handleFilterChange('maxPrice', e.target.value)} 
                 />

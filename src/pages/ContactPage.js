@@ -39,7 +39,7 @@ const handleSubmit = async (e) => {
         <div className="lux-card p-10 text-center max-w-lg">
           <div className="text-5xl mb-4">✅</div>
           <h2 className="text-2xl font-bold text-white mb-2">Message Received</h2>
-          <p className="text-muted mb-6">Thanks for reaching out. Our student support team will check this within 24 hours.</p>
+          <p className="text-muted mb-6">Thanks for reaching out. Our team will reply to your email within 24 hours.</p>
           <button onClick={() => setSubmitted(false)} className="text-primary hover:underline">Send another message</button>
         </div>
       </div>
