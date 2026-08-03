@@ -91,6 +91,23 @@
   --z-sticky: 100;
   --z-modal: 1000;
 
+ --white-02: rgba(255, 255, 255, 0.02);
+  --white-03: rgba(255, 255, 255, 0.03);
+  --white-05: rgba(255, 255, 255, 0.05);
+  --white-15: rgba(255, 255, 255, 0.15);
+  --white-20: rgba(255, 255, 255, 0.2);
+  --white-40: rgba(255, 255, 255, 0.4);
+
+  /* ===== NEW: Group 2 — Sidebar-specific ===== */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --text-nav: #888888;
+  --accent-primary-15: rgba(139, 92, 246, 0.15);
+  --accent-primary-light: #a78bfa;
+  --color-danger: #ef4444;
+  --border-hover: rgba(255, 255, 255, 0.2);
+  --text-copyright: #444444;
+  --shadow-mobile-sidebar: 10px 0 30px rgba(0, 0, 0, 0.5);
+
   /* Color Palette - Deep Space Dark Mode */
   --bg-color: #030305;       
   --bg-panel: rgba(20, 20, 23, 0.6); 
@@ -98,6 +115,15 @@
   
   --text-main: #ffffff;
   --text-muted: #a1a1aa;
+
+  --sidebar-width: 260px;
+  --header-height: 70px;
+  --z-background: -1;
+
+  --z-sidebar-mobile: 1500;   /* higher than overlay's 1400, so sidebar stays on top */
+--z-mobile-toggle: 1600;    /* higher still, so the ✕ button is always clickable */
+
+  --bg-sidebar: rgba(10, 10, 14, 0.98);
   
   --border-color: rgba(255, 255, 255, 0.1);
   
@@ -114,6 +140,10 @@
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
+
+  /* Shadows */
+  --shadow-card: 0 20px 40px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
 /* =========================================

@@ -5,16 +5,16 @@ const { logUserAction } = require("../services/analytics");
 const { uploadMultipleFiles } = require("../services/storage");
 const { createCheckoutSession } = require("../services/payments");
 
-function unwrapData(request) {
-  const data = request.data || request;
+function unwrapData(dataOrRequest) {
+  const data = dataOrRequest?.data ?? dataOrRequest;
   if (!data) return {};
   if (typeof data === "object" && data.data) return data.data;
   return data;
 }
 
-function getUserId(request) {
-  // FIX: v2 auth lives at request.auth, not context.auth
-  if (request.auth?.uid) return request.auth.uid;
+function getUserId(dataOrRequest, context) {
+  const auth = context?.auth || dataOrRequest?.auth;
+  if (auth?.uid) return auth.uid;
   const isEmulator = process.env.FUNCTIONS_EMULATOR === "true" || process.env.FIREBASE_AUTH_EMULATOR_HOST;
   if (isEmulator) return "emulator-test-user-123";
   return null;
@@ -26,12 +26,12 @@ async function checkAdminStatus(userId) {
   return doc.exists;
 }
 
-async function submitServiceRequest(request) {
+async function submitServiceRequest(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { serviceType, title, description, budget, timeline, requirements, creativeAssets } = input;
 
     if (!serviceType || !title || !description) {
@@ -81,10 +81,10 @@ async function submitServiceRequest(request) {
   }
 }
 
-async function getRequests(request) {
+async function getRequests(data, context) {
   try {
-    const input = unwrapData(request);
-    let userId = getUserId(request);
+    const input = unwrapData(data);
+    let userId = getUserId(data, context);
 
     if (input.isPublic === true) {
       userId = null;
@@ -131,11 +131,11 @@ async function getRequests(request) {
   }
 }
 
-async function updateRequestStatus(request) {
+async function updateRequestStatus(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { requestId, status, notes } = input;
     if (!requestId || !status) throw new HttpsError("invalid-argument", "Request ID and status required");
     const validStatuses = ["pending", "active", "in_progress", "completed", "cancelled"];
@@ -160,11 +160,11 @@ async function updateRequestStatus(request) {
   }
 }
 
-async function assignRequest(request) {
+async function assignRequest(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { requestId, assignedTo } = input;
     if (!requestId || !assignedTo) throw new HttpsError("invalid-argument", "Request ID and assigned user required");
     if (!(await checkAdminStatus(userId))) throw new HttpsError("permission-denied", "Admin access required");
@@ -180,11 +180,11 @@ async function assignRequest(request) {
   }
 }
 
-async function promoteRequest(request) {
+async function promoteRequest(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { requestId } = input;
     if (!requestId) throw new HttpsError("invalid-argument", "Request ID required");
     const db = admin.firestore();
@@ -199,11 +199,11 @@ async function promoteRequest(request) {
   }
 }
 
-async function getRequestDetails(request) {
+async function getRequestDetails(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { requestId } = input;
     if (!requestId) throw new HttpsError("invalid-argument", "Request ID required");
     const db = admin.firestore();
@@ -218,11 +218,11 @@ async function getRequestDetails(request) {
   }
 }
 
-async function applyToRequest(request) {
+async function applyToRequest(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { requestId, message } = input;
     if (!requestId) throw new HttpsError("invalid-argument", "Request ID required");
     const db = admin.firestore();

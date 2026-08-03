@@ -3,7 +3,7 @@
 /* Page container matches global background */
 .marketplace-page {
     min-height: 100vh;
-    padding-top: calc(var(--nav-height) + 40px); /* Account for fixed nav */
+    padding-top: calc(var(--header-height) + 40px); /* Account for fixed nav */
     padding-bottom: 80px;
   }
   
@@ -14,7 +14,7 @@
   .page-header h1 {
     font-size: 2.5rem;
     font-weight: 800;
-    background: linear-gradient(to right, white, var(--text-secondary));
+    background: linear-gradient(to right, white, var(--text-muted));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 8px;
@@ -34,9 +34,9 @@
   }
   
   .filters {
-    background: var(--card-bg);
+    background: var(--bg-panel);
     backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: 24px;
     position: sticky;
@@ -48,7 +48,7 @@
   }
   
   .filter-group label {
-    color: var(--text-secondary);
+    color: var(--text-muted);
     font-size: 0.85rem;
     font-weight: 600;
     margin-bottom: 8px;
@@ -71,7 +71,7 @@
   
   .filter-group input:focus,
   .filter-group select:focus {
-    border-color: var(--accent);
+    border-color: var(--accent-primary);
   }
   
   /* Grid Layout */
@@ -87,8 +87,8 @@
   
   /* Cards - Matching Homepage Style */
   .listing-card {
-    background: var(--card-bg) !important; /* Force override */
-    border: 1px solid var(--glass-border) !important;
+    background: var(--bg-panel) !important; /* Force override */
+    border: 1px solid var(--border-color) !important;
     backdrop-filter: blur(10px);
     border-radius: var(--radius-lg) !important;
     overflow: hidden;

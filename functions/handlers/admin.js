@@ -5,19 +5,26 @@ const { HttpsError } = require("firebase-functions/v2/https");
 const DEPLOYMENT_SECRET = "UNi]BoVI&%qw)rJ!Ma+eW)4";
 
 // -------------------------------------------------------------------------
-// HELPER: Verify admin from v2 request object
+// HELPER: Verify admin from callable context
 // -------------------------------------------------------------------------
-async function verifyAdmin(request) {
-  // FIX: v2 auth is at request.auth, not context.auth
-  if (!request.auth) {
+function unwrapData(dataOrRequest) {
+  const data = dataOrRequest?.data ?? dataOrRequest;
+  if (!data) return {};
+  if (typeof data === "object" && data.data) return data.data;
+  return data;
+}
+
+async function verifyAdmin(dataOrRequest, context) {
+  const auth = context?.auth || dataOrRequest?.auth;
+  if (!auth) {
     throw new HttpsError("unauthenticated", "Authentication required");
   }
 
   // Check custom claim first (fast path)
-  if (request.auth.token.admin === true) return true;
+  if (auth.token.admin === true) return true;
 
   // Fallback: check Firestore
-  const uid = request.auth.uid;
+  const uid = auth.uid;
   const db = admin.firestore();
   const userDoc = await db.collection("users").doc(uid).get();
 
@@ -34,7 +41,7 @@ async function verifyAdmin(request) {
 // -------------------------------------------------------------------------
 // 1. Get Admin Stats
 // -------------------------------------------------------------------------
-exports.getAdminStats = async (request) => {
+exports.getAdminStats = async (data, context) => {
   try {
     await verifyAdmin(request);
     const db = admin.firestore();
@@ -63,7 +70,7 @@ exports.getAdminStats = async (request) => {
 // -------------------------------------------------------------------------
 // 2. Get All Users
 // -------------------------------------------------------------------------
-exports.getAllUsers = async (request) => {
+exports.getAllUsers = async (data, context) => {
   try {
     await verifyAdmin(request);
     const db = admin.firestore();
@@ -78,11 +85,10 @@ exports.getAllUsers = async (request) => {
 // -------------------------------------------------------------------------
 // 3. Ban User
 // -------------------------------------------------------------------------
-exports.banUser = async (request) => {
+exports.banUser = async (data, context) => {
   try {
-    await verifyAdmin(request);
-    // FIX: data is at request.data in v2
-    const { targetUserId, ban } = request.data;
+    await verifyAdmin(data, context);
+    const { targetUserId, ban } = unwrapData(data);
     const db = admin.firestore();
 
     await db.collection("users").doc(targetUserId).update({
@@ -108,10 +114,10 @@ exports.banUser = async (request) => {
 // -------------------------------------------------------------------------
 // 4. Delete Any Item
 // -------------------------------------------------------------------------
-exports.deleteAnyItem = async (request) => {
+exports.deleteAnyItem = async (data, context) => {
   try {
-    await verifyAdmin(request);
-    const { collection, id } = request.data;
+    await verifyAdmin(data, context);
+    const { collection, id } = unwrapData(data);
     const db = admin.firestore();
     await db.collection(collection).doc(id).delete();
     return { success: true };
@@ -124,18 +130,20 @@ exports.deleteAnyItem = async (request) => {
 // -------------------------------------------------------------------------
 // 5. Make Me Admin
 // -------------------------------------------------------------------------
-exports.makeMeAdmin = async (request) => {
+exports.makeMeAdmin = async (data, context) => {
   try {
-    if (!request.auth) {
+    const auth = context?.auth || data?.auth;
+    if (!auth) {
       throw new HttpsError("unauthenticated", "Login first");
     }
 
-    if (request.data.secretKey !== DEPLOYMENT_SECRET) {
-      console.warn(`Failed Admin Claim by ${request.auth.uid}`);
+    const input = unwrapData(data);
+    if (input.secretKey !== DEPLOYMENT_SECRET) {
+      console.warn(`Failed Admin Claim by ${auth.uid}`);
       throw new HttpsError("permission-denied", "INCORRECT SECRET KEY. Access Denied.");
     }
 
-    const uid = request.auth.uid;
+    const uid = auth.uid;
     const db = admin.firestore();
 
     await db.collection("users").doc(uid).set({ role: "admin" }, { merge: true });

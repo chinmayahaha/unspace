@@ -2,15 +2,16 @@
 const admin = require("firebase-admin");
 const { HttpsError } = require("firebase-functions/v2/https");
 
-function unwrapData(request) {
-  const data = request.data || request;
+function unwrapData(dataOrRequest) {
+  const data = dataOrRequest?.data ?? dataOrRequest;
   if (!data) return {};
   if (typeof data === "object" && data.data) return data.data;
   return data;
 }
 
-function getUserId(request) {
-  if (request.auth?.uid) return request.auth.uid;
+function getUserId(dataOrRequest, context) {
+  const auth = context?.auth || dataOrRequest?.auth;
+  if (auth?.uid) return auth.uid;
   const isEmulator =
     process.env.FUNCTIONS_EMULATOR === "true" ||
     process.env.FIREBASE_AUTH_EMULATOR_HOST;
@@ -21,12 +22,12 @@ function getUserId(request) {
 // -------------------------------------------------------------------------
 // 1. Send Message in Conversation
 // -------------------------------------------------------------------------
-async function sendMessage(request) {
+async function sendMessage(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { conversationId, text } = input;
 
     if (!conversationId || !text) {
@@ -71,9 +72,9 @@ async function sendMessage(request) {
 // -------------------------------------------------------------------------
 // 2. Get User's Conversations
 // -------------------------------------------------------------------------
-async function getConversations(request) {
+async function getConversations(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
     const db = admin.firestore();
@@ -95,12 +96,12 @@ async function getConversations(request) {
 // -------------------------------------------------------------------------
 // 3. Get Messages in Conversation
 // -------------------------------------------------------------------------
-async function getMessages(request) {
+async function getMessages(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { conversationId } = input;
     if (!conversationId) throw new HttpsError("invalid-argument", "Conversation ID required");
 
@@ -131,12 +132,12 @@ async function getMessages(request) {
 // -------------------------------------------------------------------------
 // 4. Mark Messages as Read
 // -------------------------------------------------------------------------
-async function markAsRead(request) {
+async function markAsRead(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { conversationId } = input;
     if (!conversationId) throw new HttpsError("invalid-argument", "Conversation ID required");
 
@@ -169,12 +170,12 @@ async function markAsRead(request) {
 // -------------------------------------------------------------------------
 // 5. Create Conversation
 // -------------------------------------------------------------------------
-async function createConversation(request) {
+async function createConversation(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { itemType, itemId, itemTitle, recipientId, initialMessage } = input;
 
     if (!itemType || !itemId || !recipientId) {

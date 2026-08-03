@@ -6,17 +6,16 @@ const { logUserAction } = require("../services/analytics");
 // -------------------------------------------------------------------------
 // HELPERS
 // -------------------------------------------------------------------------
-function unwrapData(request) {
-  // FIX: In v2, payload is at request.data (not the first argument)
-  const data = request.data || request;
+function unwrapData(dataOrRequest) {
+  const data = dataOrRequest?.data ?? dataOrRequest;
   if (!data) return {};
   if (typeof data === "object" && data.data) return data.data;
   return data;
 }
 
-function getUserId(request) {
-  // FIX: In v2, auth is at request.auth (not context.auth)
-  if (request.auth?.uid) return request.auth.uid;
+function getUserId(dataOrRequest, context) {
+  const auth = context?.auth || dataOrRequest?.auth;
+  if (auth?.uid) return auth.uid;
   const isEmulator =
     process.env.FUNCTIONS_EMULATOR === "true" ||
     process.env.FIREBASE_AUTH_EMULATOR_HOST;
@@ -27,12 +26,12 @@ function getUserId(request) {
 // -------------------------------------------------------------------------
 // 1. Add Book For Exchange
 // -------------------------------------------------------------------------
-async function addBookForExchange(request) {
+async function addBookForExchange(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { title, author, isbn, condition, description, imageUrl, course, semester, price, edition } = input;
 
     if (!title || !author) {
@@ -79,12 +78,12 @@ async function addBookForExchange(request) {
 // -------------------------------------------------------------------------
 // 2. Find Matching Books
 // -------------------------------------------------------------------------
-async function findMatchingBooks(request) {
+async function findMatchingBooks(data, context) {
   try {
-    const currentUserId = getUserId(request);
+    const currentUserId = getUserId(data, context);
     if (!currentUserId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { userId: targetUserId, bookId } = input;
 
     const db = admin.firestore();
@@ -141,12 +140,12 @@ async function findMatchingBooks(request) {
 // -------------------------------------------------------------------------
 // 3. Initiate Exchange Request
 // -------------------------------------------------------------------------
-async function initiateExchangeRequest(request) {
+async function initiateExchangeRequest(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { targetBookId, offeredBookId, message } = input;
 
     if (!targetBookId) {
@@ -230,12 +229,12 @@ await db.collection("notifications").add({
 // -------------------------------------------------------------------------
 // 4. Manage Exchange Status
 // -------------------------------------------------------------------------
-async function manageExchangeStatus(request) {
+async function manageExchangeStatus(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { exchangeId, action } = input;
 
     if (!exchangeId || !action) {
@@ -292,12 +291,12 @@ async function manageExchangeStatus(request) {
 // -------------------------------------------------------------------------
 // 5. Get User Exchange Requests
 // -------------------------------------------------------------------------
-async function getUserExchangeRequests(request) {
+async function getUserExchangeRequests(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { type = "all" } = input;
 
     const db = admin.firestore();
@@ -328,9 +327,9 @@ async function getUserExchangeRequests(request) {
 // -------------------------------------------------------------------------
 // 6. Get All Books (public)
 // -------------------------------------------------------------------------
-async function getAllBooks(request) {
+async function getAllBooks(data, context) {
   try {
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { limit = 20, lastDocId, searchTerm } = input;
 
     const db = admin.firestore();

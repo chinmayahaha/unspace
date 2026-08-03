@@ -10,15 +10,16 @@ try {
   logUserAction = async () => {}; // no-op fallback
 }
 
-function unwrapData(request) {
-  const data = request.data || request;
+function unwrapData(dataOrRequest) {
+  const data = dataOrRequest?.data ?? dataOrRequest;
   if (!data) return {};
   if (typeof data === "object" && data.data) return data.data;
   return data;
 }
 
-function getUserId(request) {
-  if (request.auth?.uid) return request.auth.uid;
+function getUserId(dataOrRequest, context) {
+  const auth = context?.auth || dataOrRequest?.auth;
+  if (auth?.uid) return auth.uid;
   const isEmulator =
     process.env.FUNCTIONS_EMULATOR === "true" ||
     process.env.FIREBASE_AUTH_EMULATOR_HOST;
@@ -29,12 +30,12 @@ function getUserId(request) {
 // -------------------------------------------------------------------------
 // 1. Post Lost or Found Item
 // -------------------------------------------------------------------------
-async function postItem(request) {
+async function postItem(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { type, category, title, description, location, contactInfo, images, dateOccurred } = input;
 
     if (!type || !["lost", "found"].includes(type)) {
@@ -81,9 +82,9 @@ async function postItem(request) {
 // -------------------------------------------------------------------------
 // 2. Get All Items (public)
 // -------------------------------------------------------------------------
-async function getItems(request) {
+async function getItems(data, context) {
   try {
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { type, category, status = "active", limit = 20, lastDocId } = input;
 
     const db = admin.firestore();
@@ -123,12 +124,12 @@ async function getItems(request) {
 // -------------------------------------------------------------------------
 // 3. Claim Item
 // -------------------------------------------------------------------------
-async function claimItem(request) {
+async function claimItem(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { itemId, message } = input;
     if (!itemId) throw new HttpsError("invalid-argument", "Item ID required");
 
@@ -187,12 +188,12 @@ async function claimItem(request) {
 // -------------------------------------------------------------------------
 // 4. Mark Item as Resolved
 // -------------------------------------------------------------------------
-async function markResolved(request) {
+async function markResolved(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { itemId, claimedBy } = input;
     if (!itemId) throw new HttpsError("invalid-argument", "Item ID required");
 
@@ -222,9 +223,9 @@ async function markResolved(request) {
 // -------------------------------------------------------------------------
 // 5. Get My Posted Items
 // -------------------------------------------------------------------------
-async function getMyItems(request) {
+async function getMyItems(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
     const db = admin.firestore();

@@ -20,7 +20,7 @@
    const fnOpts = {
      timeoutSeconds: 300,
      memory: "1GiB",       // v2 uses "GiB" not "GB"
-     region: "us-central1",
+     region: 'asia-south1',
      invoker: ["public"],    // FIX: allow Firebase client SDK to call these functions
    };
    
@@ -138,7 +138,7 @@ exports.createConversation = onCall(fnOpts, messagingHandlers.createConversation
 exports.onContactMessageCreated = onDocumentCreated(
   {
     document: "contactMessages/{msgId}",
-    region: "us-central1",
+    region: "asia-south1",
     secrets: [gmailUser, gmailAppPassword],
   },
   (event) => contactHandlers.onContactMessageCreated(

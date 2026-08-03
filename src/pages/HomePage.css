@@ -1,320 +1,336 @@
 /* src/pages/HomePage.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.lux-container {
-    width: 100%;
-    min-height: 100vh;
-    position: relative;
-    background-color: var(--bg-color);
-    z-index: 1;
-  }
-  
-  /* NAVBAR */
-  .lux-navbar {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 1000;
-    padding: 1.5rem 2rem;
-    transition: all 0.4s ease;
-    border-bottom: 1px solid transparent;
-  }
-  
-  .lux-navbar.scrolled {
-    background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border-color);
-    padding: 1rem 2rem;
-  }
-  
-  .lux-nav-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .lux-brand {
-    font-family: var(--font-heading);
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: white;
-    text-transform: uppercase;
-  }
-  
-  .lux-nav-links {
-    display: flex;
-    gap: 2.5rem;
-  }
-  
-  .lux-link {
-    color: var(--text-muted);
-    text-decoration: none;
-    font-size: 0.95rem;
-    font-weight: 500;
-    transition: color 0.3s, text-shadow 0.3s;
-    position: relative;
-  }
-  
-  .lux-link:hover {
-    color: var(--text-main);
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-  }
-  
-  .lux-auth {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-  }
-  
-  .lux-btn-text {
-    color: var(--text-main);
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 500;
-  }
-  
-  .lux-btn-primary {
-    padding: 0.7rem 1.5rem;
-    background: linear-gradient(135deg, var(--text-main), #e2e2e2);
-    color: var(--bg-color);
-    text-decoration: none;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    transition: transform 0.2s, box-shadow 0.2s;
-    font-family: var(--font-heading);
-    letter-spacing: 0.5px;
-  }
-  
-  .lux-btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
-  }
-  
-  /* HERO SECTION */
-  .lux-hero {
-    position: relative;
-    min-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 140px 2rem 0;
-    overflow: hidden;
-  }
-  
-  /* SHAPES */
-  .shape-blob {
-    position: absolute;
-    filter: blur(80px);
-    z-index: -1;
-    opacity: 0.6;
-    animation: float 10s ease-in-out infinite;
-  }
-  
-  .blob-1 {
-    top: -10%; left: -10%; width: 500px; height: 500px;
-    background: radial-gradient(circle, var(--accent-primary) 0%, transparent 70%);
-    animation-delay: 0s;
-  }
-  
-  .blob-2 {
-    bottom: 20%; right: -5%; width: 400px; height: 400px;
-    background: radial-gradient(circle, var(--accent-secondary) 0%, transparent 70%);
-    animation-delay: -2s;
-  }
-  
-  .blob-3 {
-    top: 40%; left: 30%; width: 300px; height: 300px;
-    background: radial-gradient(circle, var(--accent-tertiary) 0%, transparent 70%);
-    opacity: 0.4; animation-delay: -5s;
-  }
-  
-  @keyframes float {
-    0%, 100% { transform: translate(0, 0); }
-    50% { transform: translate(30px, -30px); }
-  }
-  
+@layer components {
+  /* OVERRIDE: HomePage hero title is larger than global .lux-title.
+     Only the properties that intentionally differ from the base definition.
+     Everything else (gradient text, font-weight, tracking) comes from global.css. */
   .lux-title {
-    font-family: var(--font-heading);
     font-size: clamp(3rem, 8vw, 6rem);
-    line-height: 1.1;
-    margin-bottom: 1.5rem;
-    font-weight: 700;
-    letter-spacing: -0.03em;
   }
-  
-  .lux-accent {
-    background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  
+
+  /* OVERRIDE: HomePage subtitle has tighter max-width and different spacing
+     than the global .lux-subtitle. */
   .lux-subtitle {
-    color: var(--text-muted);
     max-width: 600px;
     font-size: 1.25rem;
     line-height: 1.7;
     margin-bottom: 3rem;
     font-weight: 300;
   }
-  
-  .lux-cta-group {
-    display: flex; gap: 1.5rem; align-items: center;
+}
+
+/* =========================================
+   HOMEPAGE-SPECIFIC CLASSES (non-lux-)
+   ========================================= */
+
+.homepage-container {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  background-color: var(--bg-color);
+  z-index: var(--z-normal);
+}
+
+/* NAVBAR */
+.homepage-navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: var(--z-modal);
+  padding: 1.5rem 2rem;
+  transition: all 0.4s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.homepage-navbar.scrolled {
+  background: var(--bg-sidebar);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 2rem;
+}
+
+.homepage-nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.homepage-brand {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  text-transform: uppercase;
+}
+
+.homepage-nav-links {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.homepage-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: color 0.3s, text-shadow 0.3s;
+  position: relative;
+}
+
+.homepage-link:hover {
+  color: var(--text-main);
+  text-shadow: 0 0 8px var(--white-40);
+}
+
+.homepage-auth {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.homepage-btn-text {
+  color: var(--text-main);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Page-specific nav button — does NOT collide with global .lux-btn-primary */
+.homepage-nav-btn {
+  padding: 0.7rem 1.5rem;
+  background: linear-gradient(135deg, var(--text-main), var(--text-muted));
+  color: var(--bg-color);
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: transform 0.2s, box-shadow 0.2s;
+  font-family: var(--font-heading);
+  letter-spacing: 0.5px;
+}
+
+.homepage-nav-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px var(--white-20);
+}
+
+/* HERO SECTION */
+.homepage-hero {
+  position: relative;
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 140px 2rem 0;
+  overflow: hidden;
+}
+
+/* SHAPES — renamed from shape-blob to avoid redefining global .shape-blob */
+.homepage-shape-blob {
+  position: absolute;
+  filter: blur(80px);
+  z-index: -1;
+  opacity: 0.6;
+  animation: homepage-float 10s ease-in-out infinite;
+}
+
+.homepage-blob-1 {
+  top: -10%; left: -10%; width: 500px; height: 500px;
+  background: radial-gradient(circle, var(--accent-primary) 0%, transparent 70%);
+  animation-delay: 0s;
+}
+
+.homepage-blob-2 {
+  bottom: 20%; right: -5%; width: 400px; height: 400px;
+  background: radial-gradient(circle, var(--accent-secondary) 0%, transparent 70%);
+  animation-delay: -2s;
+}
+
+.homepage-blob-3 {
+  top: 40%; left: 30%; width: 300px; height: 300px;
+  background: radial-gradient(circle, var(--accent-tertiary) 0%, transparent 70%);
+  opacity: 0.4; animation-delay: -5s;
+}
+
+/* Renamed to avoid redefining global @keyframes float */
+@keyframes homepage-float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -30px); }
+}
+
+.homepage-accent {
+  background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.homepage-cta-group {
+  display: flex; gap: 1.5rem; align-items: center;
+}
+
+.homepage-btn-large {
+  padding: 1.1rem 2.8rem;
+  background: var(--text-main);
+  color: var(--bg-color);
+  text-decoration: none;
+  font-weight: 700;
+  border-radius: 4px;
+  font-family: var(--font-heading);
+  letter-spacing: 0.5px;
+  transition: all 0.3s;
+}
+
+.homepage-btn-large:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px var(--white-15);
+}
+
+.homepage-btn-outline {
+  padding: 1.1rem 2.8rem;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  text-decoration: none;
+  border-radius: 4px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  transition: all 0.3s;
+  background: var(--white-02);
+}
+
+.homepage-btn-outline:hover {
+  border-color: var(--text-main);
+  background: var(--white-05);
+}
+
+/* METRICS */
+.homepage-metrics {
+  display: flex; justify-content: center; align-items: center;
+  padding: 5rem 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--white-02);
+  backdrop-filter: blur(10px);
+  margin-top: 4rem;
+}
+
+.homepage-metric-item { padding: 0 4rem; text-align: center; }
+
+.homepage-metric-num {
+  display: block; font-family: var(--font-heading); font-size: 3rem; font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(to bottom, var(--text-main), var(--text-muted));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.homepage-metric-label {
+  color: var(--text-muted); font-size: 0.85rem;
+  text-transform: uppercase; letter-spacing: 0.15em; font-weight: 600;
+}
+
+.homepage-metric-divider {
+  width: 1px; height: 60px;
+  background: linear-gradient(to bottom, transparent, var(--border-color), transparent);
+}
+
+/* SECTIONS */
+.homepage-section { max-width: 1200px; margin: 0 auto; padding: 8rem 2rem; }
+.homepage-section-title {
+  font-family: var(--font-heading); font-size: 3.5rem; margin-bottom: 5rem;
+  text-align: center; font-weight: 700; letter-spacing: -0.02em;
+}
+
+.homepage-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; }
+
+/* Page-specific feature card — does NOT collide with global .lux-card */
+.homepage-feature-card {
+  padding: 3.5rem 2.5rem;
+  background: linear-gradient(180deg, var(--white-03) 0%, var(--white-02) 100%);
+  border: 1px solid var(--border-color); border-radius: var(--radius-md);
+  transition: transform 0.3s, border-color 0.3s; position: relative; overflow: hidden;
+}
+
+.homepage-feature-card:hover { transform: translateY(-5px); border-color: var(--border-hover); }
+
+.homepage-icon {
+  font-size: 2.5rem; margin-bottom: 2rem;
+  background: var(--white-05); width: 80px; height: 80px;
+  display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md);
+}
+
+.homepage-feature-card h3 { font-family: var(--font-heading); font-size: 1.5rem; margin-bottom: 1rem; font-weight: 600; }
+.homepage-feature-card p { color: var(--text-muted); line-height: 1.7; font-size: 1.05rem; }
+
+/* ACCORDION */
+.homepage-accordion { max-width: 800px; margin: 0 auto; }
+.homepage-accordion-item { border-bottom: 1px solid var(--border-color); cursor: pointer; }
+.homepage-accordion-header {
+  padding: 2.5rem 0; display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-heading); font-size: 1.3rem; font-weight: 500; transition: color 0.3s;
+}
+.homepage-accordion-item:hover .homepage-accordion-header { color: var(--accent-primary); }
+.homepage-accordion-body {
+  max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease;
+  color: var(--text-muted); line-height: 1.7; font-size: 1.1rem;
+}
+.homepage-accordion-body.open { max-height: 200px; padding-bottom: 2.5rem; }
+.homepage-plus { font-weight: 300; font-size: 1.8rem; color: var(--text-muted); }
+
+/* FOOTER */
+.homepage-footer {
+  border-top: 1px solid var(--border-color); padding: 6rem 2rem 2rem; margin-top: 4rem;
+  background: linear-gradient(to bottom, var(--bg-color), var(--bg-panel));
+}
+.homepage-footer-content {
+  max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between;
+  margin-bottom: 5rem; flex-wrap: wrap; gap: 3rem;
+}
+.homepage-footer-brand h3 { font-family: var(--font-heading); font-size: 1.8rem; margin-bottom: 1rem; font-weight: 700; }
+.homepage-footer-brand p { color: var(--text-muted); font-size: 1rem; max-width: 300px; }
+.homepage-footer-links { display: flex; gap: 4rem; }
+.homepage-footer-col { display: flex; flex-direction: column; gap: 1rem; }
+.homepage-footer-col h4 {
+  font-family: var(--font-heading); font-size: 0.9rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-main); margin-bottom: 0.5rem;
+}
+.homepage-footer-links a { color: var(--text-muted); transition: color 0.2s; }
+.homepage-footer-links a:hover { color: var(--text-main); }
+.homepage-copyright {
+  text-align: center; color: var(--text-copyright); font-size: 0.9rem; padding-top: 2rem;
+  border-top: 1px solid var(--white-05);
+}
+
+/* MOBILE */
+.homepage-hamburger { 
+  display: none; 
+  font-size: 1.5rem;
+  color: var(--text-main);
+  cursor: pointer;
+}
+.homepage-mobile-auth { display: none; }
+
+@media (max-width: 768px) {
+  .lux-title { font-size: 3rem; }
+  .homepage-grid { grid-template-columns: 1fr; }
+  .homepage-metrics { flex-direction: column; gap: 2rem; }
+  .homepage-metric-divider { display: none; }
+  .homepage-hero { padding-top: 120px; }
+  .homepage-nav-links {
+    display: none; flex-direction: column; position: absolute; top: 70px; left: 0; width: 100%;
+    background: var(--bg-color); padding: 2rem; border-bottom: 1px solid var(--border-color); gap: 1.5rem;
   }
-  
-  .lux-btn-large {
-    padding: 1.1rem 2.8rem;
-    background: var(--text-main);
-    color: var(--bg-color);
-    text-decoration: none;
-    font-weight: 700;
-    border-radius: 4px;
-    font-family: var(--font-heading);
-    letter-spacing: 0.5px;
-    transition: all 0.3s;
-  }
-  
-  .lux-btn-large:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.15);
-  }
-  
-  .lux-btn-outline {
-    padding: 1.1rem 2.8rem;
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    text-decoration: none;
-    border-radius: 4px;
-    font-family: var(--font-heading);
-    font-weight: 600;
-    transition: all 0.3s;
-    background: rgba(255, 255, 255, 0.02);
-  }
-  
-  .lux-btn-outline:hover {
-    border-color: var(--text-main);
-    background: rgba(255, 255, 255, 0.05);
-  }
-  
-  /* METRICS */
-  .lux-metrics {
-    display: flex; justify-content: center; align-items: center;
-    padding: 5rem 0;
-    border-top: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
-    background: rgba(255, 255, 255, 0.01);
-    backdrop-filter: blur(10px);
-    margin-top: 4rem;
-  }
-  
-  .lux-metric-item { padding: 0 4rem; text-align: center; }
-  
-  .lux-metric-num {
-    display: block; font-family: var(--font-heading); font-size: 3rem; font-weight: 700;
-    margin-bottom: 0.5rem;
-    background: linear-gradient(to bottom, #fff, #aaa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  
-  .lux-metric-label {
-    color: var(--text-muted); font-size: 0.85rem;
-    text-transform: uppercase; letter-spacing: 0.15em; font-weight: 600;
-  }
-  
-  .lux-metric-divider {
-    width: 1px; height: 60px;
-    background: linear-gradient(to bottom, transparent, var(--border-color), transparent);
-  }
-  
-  /* SECTIONS */
-  .lux-section { max-width: 1200px; margin: 0 auto; padding: 8rem 2rem; }
-  .lux-section-title {
-    font-family: var(--font-heading); font-size: 3.5rem; margin-bottom: 5rem;
-    text-align: center; font-weight: 700; letter-spacing: -0.02em;
-  }
-  
-  .lux-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; }
-  
-  .lux-card {
-    padding: 3.5rem 2.5rem;
-    background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
-    border: 1px solid var(--border-color); border-radius: 12px;
-    transition: transform 0.3s, border-color 0.3s; position: relative; overflow: hidden;
-  }
-  
-  .lux-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.2); }
-  
-  .lux-icon {
-    font-size: 2.5rem; margin-bottom: 2rem;
-    background: rgba(255, 255, 255, 0.05); width: 80px; height: 80px;
-    display: flex; align-items: center; justify-content: center; border-radius: 12px;
-  }
-  
-  .lux-card h3 { font-family: var(--font-heading); font-size: 1.5rem; margin-bottom: 1rem; font-weight: 600; }
-  .lux-card p { color: var(--text-muted); line-height: 1.7; font-size: 1.05rem; }
-  
-  /* ACCORDION */
-  .lux-accordion { max-width: 800px; margin: 0 auto; }
-  .lux-accordion-item { border-bottom: 1px solid var(--border-color); cursor: pointer; }
-  .lux-accordion-header {
-    padding: 2.5rem 0; display: flex; justify-content: space-between; align-items: center;
-    font-family: var(--font-heading); font-size: 1.3rem; font-weight: 500; transition: color 0.3s;
-  }
-  .lux-accordion-item:hover .lux-accordion-header { color: var(--accent-primary); }
-  .lux-accordion-body {
-    max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease;
-    color: var(--text-muted); line-height: 1.7; font-size: 1.1rem;
-  }
-  .lux-accordion-body.open { max-height: 200px; padding-bottom: 2.5rem; }
-  .lux-plus { font-weight: 300; font-size: 1.8rem; color: var(--text-muted); }
-  
-  /* FOOTER */
-  .lux-footer {
-    border-top: 1px solid var(--border-color); padding: 6rem 2rem 2rem; margin-top: 4rem;
-    background: linear-gradient(to bottom, var(--bg-color), #080808);
-  }
-  .lux-footer-content {
-    max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between;
-    margin-bottom: 5rem; flex-wrap: wrap; gap: 3rem;
-  }
-  .lux-footer-brand h3 { font-family: var(--font-heading); font-size: 1.8rem; margin-bottom: 1rem; font-weight: 700; }
-  .lux-footer-brand p { color: var(--text-muted); font-size: 1rem; max-width: 300px; }
-  .lux-footer-links { display: flex; gap: 4rem; }
-  .footer-col { display: flex; flex-direction: column; gap: 1rem; }
-  .footer-col h4 {
-    font-family: var(--font-heading); font-size: 0.9rem; text-transform: uppercase;
-    letter-spacing: 0.1em; color: white; margin-bottom: 0.5rem;
-  }
-  .lux-footer-links a { color: var(--text-muted); transition: color 0.2s; }
-  .lux-footer-links a:hover { color: white; }
-  .lux-copyright {
-    text-align: center; color: #444; font-size: 0.9rem; padding-top: 2rem;
-    border-top: 1px solid rgba(255,255,255,0.05);
-  }
-  
-  /* MOBILE */
-  .lux-hamburger { display: none; }
-  .lux-mobile-auth { display: none; }
-  
-  @media (max-width: 768px) {
-    .lux-title { font-size: 3rem; }
-    .lux-grid { grid-template-columns: 1fr; }
-    .lux-metrics { flex-direction: column; gap: 2rem; }
-    .lux-metric-divider { display: none; }
-    .lux-hero { padding-top: 120px; }
-    .lux-nav-links {
-      display: none; flex-direction: column; position: absolute; top: 70px; left: 0; width: 100%;
-      background: var(--bg-color); padding: 2rem; border-bottom: 1px solid var(--border-color); gap: 1.5rem;
-    }
-    .lux-nav-links.open { display: flex; }
-    .lux-auth { display: none; }
-    .lux-mobile-auth { display: block; margin-top: 1rem; }
-    .lux-hamburger { display: block; background: none; border: none; cursor: pointer; }
-    .lux-hamburger .bar { display: block; width: 25px; height: 2px; background: white; margin: 6px 0; transition: all 0.3s; }
-  }
+  .homepage-nav-links.open { display: flex; }
+  .homepage-auth { display: none; }
+  .homepage-mobile-auth { display: block; margin-top: 1rem; }
+  .homepage-hamburger { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; width: 40px; height: 40px; }
+  .homepage-hamburger .bar { display: block; width: 25px; height: 2px; background: var(--text-main); margin: 6px 0; transition: all 0.3s; }
+}

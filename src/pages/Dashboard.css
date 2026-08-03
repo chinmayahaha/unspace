@@ -1,19 +1,23 @@
-/* Dashboard.css */
+/* src/pages/Dashboard.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .dashboard {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1C1C1E, #2C2C2E);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--bg-color), var(--bg-panel));
+  color: var(--text-main);
 }
 
 /* Header */
 .dashboard-header {
-  background: rgba(28, 28, 30, 0.95);
+  background: var(--bg-sidebar);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-color);
   padding: 20px 0;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: var(--z-sticky);
 }
 
 .dashboard-header-content {
@@ -33,7 +37,7 @@
 
 .dashboard-icon {
   font-size: 2rem;
-  color: #0A84FF;
+  color: var(--color-info);
 }
 
 .dashboard-logo h1 {
@@ -56,8 +60,8 @@
 
 .user-icon {
   font-size: 1.2rem;
-  color: #0A84FF;
-  background: rgba(10, 132, 255, 0.1);
+  color: var(--accent-tertiary);
+  background: var(--white-02);
   padding: 8px;
   border-radius: 50%;
 }
@@ -73,16 +77,16 @@
 }
 
 .user-email {
-  color: #A3A3A3;
+  color: var(--text-muted);
   font-size: 0.8rem;
 }
 
 .signout-button {
-  background: rgba(255, 59, 48, 0.1);
-  border: 1px solid rgba(255, 59, 48, 0.3);
-  color: #FF3B30;
+  background: var(--white-02);
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.3s ease;
@@ -92,7 +96,7 @@
 }
 
 .signout-button:hover {
-  background: rgba(255, 59, 48, 0.2);
+  background: var(--white-20);
   transform: translateY(-1px);
 }
 
@@ -122,7 +126,7 @@
 }
 
 .welcome-section p {
-  color: #A3A3A3;
+  color: var(--text-muted);
   font-size: 1.1rem;
 }
 
@@ -130,7 +134,7 @@
 .stats-section h3 {
   font-size: 1.5rem;
   margin-bottom: 20px;
-  color: #FFFFFF;
+  color: var(--text-main);
 }
 
 .stats-grid {
@@ -140,9 +144,9 @@
 }
 
 .stat-card {
-  background: rgba(44, 44, 46, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
   padding: 24px;
   display: flex;
   align-items: center;
@@ -152,21 +156,21 @@
 
 .stat-card:hover {
   transform: translateY(-4px);
-  background: rgba(44, 44, 46, 0.9);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  background: var(--bg-hover);
+  box-shadow: var(--shadow-elevated);
 }
 
 .stat-icon {
-  background: rgba(10, 132, 255, 0.1);
+  background: var(--white-02);
   padding: 16px;
-  border-radius: 12px;
-  color: #0A84FF;
+  border-radius: var(--radius-md);
+  color: var(--accent-tertiary);
   font-size: 1.5rem;
 }
 
 .stat-content h4 {
   margin: 0 0 8px 0;
-  color: #A3A3A3;
+  color: var(--text-muted);
   font-size: 0.9rem;
   font-weight: 500;
 }
@@ -174,12 +178,12 @@
 .stat-value {
   font-size: 2rem;
   font-weight: 700;
-  color: #FFFFFF;
+  color: var(--text-main);
   margin-bottom: 4px;
 }
 
 .stat-change {
-  color: #30D158;
+  color: var(--accent-secondary);
   font-size: 0.8rem;
   font-weight: 500;
 }
@@ -196,13 +200,13 @@
 .actions-section h3 {
   font-size: 1.5rem;
   margin-bottom: 20px;
-  color: #FFFFFF;
+  color: var(--text-main);
 }
 
 .activity-list {
-  background: rgba(44, 44, 46, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -214,13 +218,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  background: rgba(28, 28, 30, 0.5);
-  border-radius: 12px;
+  background: var(--white-02);
+  border-radius: var(--radius-md);
   transition: all 0.3s ease;
 }
 
 .activity-item:hover {
-  background: rgba(28, 28, 30, 0.7);
+  background: var(--white-05);
   transform: translateX(4px);
 }
 
@@ -231,12 +235,12 @@
 
 .activity-action {
   font-weight: 600;
-  color: #FFFFFF;
+  color: var(--text-main);
   margin-bottom: 4px;
 }
 
 .activity-project {
-  color: #A3A3A3;
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 
@@ -244,7 +248,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #A3A3A3;
+  color: var(--text-muted);
   font-size: 0.8rem;
 }
 
@@ -256,9 +260,9 @@
 }
 
 .action-card {
-  background: rgba(44, 44, 46, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
   padding: 24px;
   text-align: center;
   transition: all 0.3s ease;
@@ -267,26 +271,26 @@
 
 .action-card:hover {
   transform: translateY(-4px);
-  background: rgba(44, 44, 46, 0.9);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  border-color: rgba(10, 132, 255, 0.3);
+  background: var(--bg-hover);
+  box-shadow: var(--shadow-elevated);
+  border-color: var(--accent-tertiary);
 }
 
 .action-icon {
   font-size: 2rem;
-  color: #0A84FF;
+  color: var(--accent-tertiary);
   margin-bottom: 12px;
 }
 
 .action-card h4 {
   margin: 0 0 8px 0;
-  color: #FFFFFF;
+  color: var(--text-main);
   font-size: 1.1rem;
 }
 
 .action-card p {
   margin: 0;
-  color: #A3A3A3;
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 

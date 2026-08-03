@@ -5,7 +5,8 @@ import {
   createUserWithEmailAndPassword, 
   signOut as firebaseSignOut, 
   GoogleAuthProvider, 
-  signInWithPopup 
+  signInWithPopup,
+  updateProfile
 } from 'firebase/auth';
 import { auth, db, firebaseConfigured } from '../../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -76,6 +77,9 @@ export const AuthProvider = ({ children }) => {
     if (!auth) return { success: false, error: 'Firebase config missing' };
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      if (name) {
+        await updateProfile(userCredential.user, { displayName: name });
+      }
       return { success: true, userCredential };
     } catch (error) {
       return { success: false, error: error.message };

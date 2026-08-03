@@ -6,7 +6,7 @@ import { db } from '../../firebase';
 import { useAuth } from '../../features/auth/context/AuthContext';
 import LuxuryBackground from '../UI/LuxuryBackground';
 import './Layout.css';
-import { icon } from '@fortawesome/fontawesome-svg-core';
+
 
 const NAV_ITEMS = [
   { path: '/dashboard',     label: 'Dashboard',    icon: '📊' },
@@ -27,6 +27,17 @@ const Layout = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isLinkActive = (path) => location.pathname.startsWith(path);
+
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.classList.add('sidebar-open');
+    } else {
+      document.body.classList.remove('sidebar-open');
+    }
+    // Cleanup on unmount so body isn't stuck locked
+    return () => document.body.classList.remove('sidebar-open');
+  }, [mobileMenuOpen]);
 
   // Count unread conversations
   useEffect(() => {

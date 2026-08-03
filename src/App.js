@@ -80,7 +80,7 @@ function App() {
             <Route path="/about"   element={<Layout><AboutUsPage /></Layout>} />
             <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
 
-            {/* Public browsing — anyone can view listings/books/businesses/ads */}
+            {/* Public browsing — anyone can view listings/books/businesses/ads  */}
             <Route path="/marketplace"         element={<Layout><MarketplacePage /></Layout>} />
             <Route path="/listing/:listingId"  element={<Layout><ListingDetailPage /></Layout>} />
             <Route path="/book-exchange"       element={<Layout><BookExchangePage /></Layout>} />
@@ -106,7 +106,7 @@ function App() {
             <Route path="/lostfound/post" element={
   <ProtectedRoute><Layout><PostItemPage /></Layout></ProtectedRoute>
 } />
-<Route path="/lostfound/:itemId" element={<Layout><ItemDetailPage /></Layout>} /> 
+ 
             
             <Route path="/marketplace/new" element={
               <ProtectedRoute><Layout><CreateListingPage /></Layout></ProtectedRoute>

@@ -19,7 +19,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const functions = getFunctions(app);
+const functionsRegion = process.env.REACT_APP_FUNCTIONS_REGION || 'asia-south1';
+const functions = getFunctions(app, functionsRegion);
 const storage = getStorage(app);
 
 // Check if we are running on localhost
@@ -35,6 +36,8 @@ if (isLocalhost) {
   } catch (e) {
     console.warn('Emulator connection failed:', e.message);
   }
+} else {
+  console.log(`🌐 Production functions region: ${functionsRegion}`);
 }
 
 const firebaseConfigured = !!firebaseConfig.apiKey;

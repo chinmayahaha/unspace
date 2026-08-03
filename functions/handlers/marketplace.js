@@ -4,27 +4,27 @@ const { HttpsError } = require("firebase-functions/v2/https");
 const { logUserAction } = require("../services/analytics");
 const { createCheckoutSession } = require("../services/payments");
 
-function unwrapData(request) {
-  const data = request.data || request;
+function unwrapData(dataOrRequest) {
+  const data = dataOrRequest?.data ?? dataOrRequest;
   if (!data) return {};
   if (typeof data === "object" && data.data) return data.data;
   return data;
 }
 
-function getUserId(request) {
-  // FIX: v2 auth lives at request.auth, not context.auth
-  if (request.auth?.uid) return request.auth.uid;
+function getUserId(dataOrRequest, context) {
+  const auth = context?.auth || dataOrRequest?.auth;
+  if (auth?.uid) return auth.uid;
   const isEmulator = process.env.FUNCTIONS_EMULATOR === "true" || process.env.FIREBASE_AUTH_EMULATOR_HOST;
   if (isEmulator) return "emulator-test-user-123";
   return null;
 }
 
-async function createListing(request) {
+async function createListing(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "You must be logged in to create a listing.");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { title, description, price, category, condition, images } = input;
 
     if (!title || !price || !category) throw new HttpsError("invalid-argument", "Missing required fields.");
@@ -59,9 +59,9 @@ async function createListing(request) {
   }
 }
 
-async function getUserListings(request) {
+async function getUserListings(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
     const db = admin.firestore();
@@ -78,9 +78,9 @@ async function getUserListings(request) {
   }
 }
 
-async function getAllListings(request) {
+async function getAllListings(data, context) {
   try {
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { category, condition, limit = 20, lastDocId } = input;
 
     const db = admin.firestore();
@@ -109,9 +109,9 @@ async function getAllListings(request) {
   }
 }
 
-async function getListing(request) {
+async function getListing(data, context) {
   try {
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { listingId } = input;
     if (!listingId) throw new HttpsError("invalid-argument", "Listing ID is required");
 
@@ -126,12 +126,12 @@ async function getListing(request) {
   }
 }
 
-async function updateListing(request) {
+async function updateListing(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { listingId, title, description, price, category, condition, images } = input;
     if (!listingId) throw new HttpsError("invalid-argument", "Listing ID is required");
 
@@ -158,12 +158,12 @@ async function updateListing(request) {
   }
 }
 
-async function deleteListing(request) {
+async function deleteListing(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { listingId } = input;
 
     const db = admin.firestore();
@@ -181,12 +181,12 @@ async function deleteListing(request) {
   }
 }
 
-async function contactSeller(request) {
+async function contactSeller(data, context) {
   try {
-    const buyerId = getUserId(request);
+    const buyerId = getUserId(data, context);
     if (!buyerId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { listingId, message } = input;
 
     const db = admin.firestore();
@@ -255,12 +255,12 @@ async function contactSeller(request) {
   }
 }
 
-async function featureListing(request) {
+async function featureListing(data, context) {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(data, context);
     if (!userId) throw new HttpsError("unauthenticated", "Authentication required");
 
-    const input = unwrapData(request);
+    const input = unwrapData(data);
     const { listingId } = input;
 
     const db = admin.firestore();
